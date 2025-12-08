@@ -1,7 +1,7 @@
 import json 
 import os, sys
 
-def load_config(path):
+def load_json_resource(path):
     """Загружаем интересующие паттерны (int_value) из файла"""
     with open(resource_path(path), "r", encoding="utf-8") as f:
         return json.load(f)

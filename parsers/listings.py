@@ -2,15 +2,29 @@ from urllib.parse import quote
 import time
 from utils.requests import send_request
 from utils.logs import log
+from utils.helpers import load_json_resource
 from typing import Optional
 from qt.signals import applog
 
 # --- Настройка ---
 class Listings:
+    CURRENCIES_PATH = './assets/currencies.json'
     BASE_URL  = 'https://steamcommunity.com/market/listings/730'
 
     def __init__(self, error_timeout = 1):
         self.error_timeout = error_timeout
+
+        self.currencies = load_json_resource(self.CURRENCIES_PATH)
+    
+    def get_currency(self, code: str) -> dict | None:
+        """Возвращает запись валюты по коду, например 'USD'."""
+        code = code.upper()
+
+        for c in self.currencies:
+            if c.get("code") == code:
+                return c
+
+        return None
 
     def extract_pattern(self, asset_properties: list) -> int | None:
         """Достаёт int_value из propertyid = 1"""
@@ -31,9 +45,11 @@ class Listings:
         
         return raw_inspect_link.replace("%listingid%", listing['listingid']).replace("%assetid%", listing['asset']['id'])
     
-    def get(self, hash_name: str, proxy: Optional[dict] = None):
+    def get(self, hash_name: str, currency_code = 'USD', proxy: Optional[dict] = None):
         try:
-            url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency=1&norender=1"
+            currency = self.get_currency(currency_code)
+
+            url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1"
 
             response = send_request(url, proxy)
 
@@ -84,6 +100,8 @@ class Listings:
                     "pattern": pattern,
                     "float": float,
                     "price": (int(listing['price']) + int(listing['fee'])) / 100,
+                    "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
+                    "currency": currency,
                     'assets': None,
                     'buy_url': f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
                     'inspect_link': inspect_link
