@@ -1,9 +1,8 @@
 from PyQt5.QtCore import QObject, pyqtSignal
-import time
+import time, random
 from parsers.listings import Listings, Analyzer
 from utils.helpers import load_json_resource
 from utils.market import price_difference, convert_price
-import random
 
 EXTERIORS = [
     "Factory New",

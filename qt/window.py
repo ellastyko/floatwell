@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QWidget, QDockWidget
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QSystemTrayIcon as QTI
 from PyQt5 import QtWidgets, QtGui, QtCore
 from configurator import config
 from qt.widgets.sidebar import SidebarDock
@@ -53,21 +54,31 @@ class MainWindow(QMainWindow):
         self.setup_tray()
 
     def setup_tray(self):
-        # Иконка для трея
+        # Иконка трея
         self.tray_icon = QtWidgets.QSystemTrayIcon(self)
         self.tray_icon.setIcon(QtGui.QIcon(resource_path(config['main']['icon'])))
 
         # Меню трея
-        tray_menu = QtWidgets.QMenu()
+        self.tray_menu = QtWidgets.QMenu()
 
-        show_action = tray_menu.addAction("Показать")
-        quit_action = tray_menu.addAction("Выход")
-
-        show_action.triggered.connect(self.show)
+        quit_action = self.tray_menu.addAction("Exit")
         quit_action.triggered.connect(QtWidgets.qApp.quit)
 
-        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.setContextMenu(self.tray_menu)
+
+        # Обработка кликов
+        self.tray_icon.activated.connect(self.on_tray_activated)
+
         self.tray_icon.show()
+    
+    def on_tray_activated(self, reason):
+        if reason == QTI.Trigger:  # ЛКМ
+            self.show()
+            self.raise_()
+            self.activateWindow()
+        elif reason == QTI.Context:  # ПКМ
+            # Показываем меню вручную
+            self.tray_menu.exec_(QtGui.QCursor.pos())
 
     def on_new_data(self, item_data):
         data_bus.add_items.emit(item_data)
@@ -78,9 +89,3 @@ class MainWindow(QMainWindow):
         """Скрываем окно вместо выхода"""
         event.ignore()
         self.hide()
-        self.tray_icon.showMessage(
-            "Приложение работает",
-            "Окно закрыто, но программа продолжает работать в фоне.",
-            QtWidgets.QSystemTrayIcon.Information,
-            2000
-        )
