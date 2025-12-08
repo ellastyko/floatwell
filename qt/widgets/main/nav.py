@@ -15,7 +15,7 @@ class NavWidget(QWidget):
         # Основные кнопки режимов
 
         buttons = [
-            ("Listings", lambda: ui.mode.emit('market')),
+            ("Listings", lambda: ui.mode.emit('listings')),
             ("Logs", lambda: ui.mode.emit('logs')),
             ("Proxies", lambda: ui.mode.emit('proxies')),
         ]

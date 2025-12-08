@@ -20,43 +20,31 @@ class MainWidget(QWidget):
         layout.addWidget(self.nav)
         layout.addLayout(self.view_stack, stretch=10)
 
-        self.market = None
-        self.logs  = None
+        self.market = ItemsTableWidget()
+        self.logs   = LogWidget()
+        self.proxies = QWidget()  # заглушка
+
+        self.view_stack.addWidget(self.market)
+        self.view_stack.addWidget(self.logs)
+        self.view_stack.addWidget(self.proxies)
 
         ui.mode.connect(self.mode_changed)
 
         # Default view
-        self.show_market()
+        self.view_stack.setCurrentWidget(self.market)
     
     def mode_changed(self, mode):
-        if mode == 'market':
-            self.show_market()
-        if mode == 'logs':
-            self.show_logs()
+        if mode == 'listings':
+            self.view_stack.setCurrentWidget(self.market)
+        elif mode == 'logs':
+            self.view_stack.setCurrentWidget(self.logs)
+        elif mode == 'proxies':
+            self.view_stack.setCurrentWidget(self.proxies)
 
-    def show_logs(self):
+    def closeEvent(self, event):
         if self.market:
-            self.view_stack.removeWidget(self.market)
-            self.market.deleteLater()
-            self.market = None
-        
-        if self.logs is None:
-            self.logs = LogWidget()
-            self.view_stack.addWidget(self.logs)
-
-        self.view_stack.setCurrentWidget(self.logs)
-
-    def show_market(self):
-        if self.logs:
-            self.view_stack.removeWidget(self.logs)
-            self.logs.deleteLater()
-            self.logs = None
-
-        if self.market is None:
-            self.market = ItemsTableWidget()
-            self.view_stack.addWidget(self.market)
-
-        self.view_stack.setCurrentWidget(self.market)
+            self.market.closeEvent(event)
+        event.accept()
 
     def closeEvent(self, event):
         if self.market:
