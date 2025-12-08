@@ -1,8 +1,10 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 import time, random
 from parsers.listings import Listings, Analyzer
 from utils.helpers import load_json_resource
-from utils.market import price_difference, convert_price
+from utils.market import price_difference
+import humanize
+from datetime import datetime, timedelta
 
 EXTERIORS = [
     "Factory New",
@@ -21,8 +23,7 @@ class ParserWorker(QObject):
 
     def __init__(self):
         super().__init__()
-        self._running = True
-
+        self._running = False
         self.config  = load_json_resource(self.ANALYZER_CONFIG_FILE)
         self.proxies = load_json_resource(self.PROXIES)
 
@@ -31,13 +32,19 @@ class ParserWorker(QObject):
 
     def stop(self):
         self._running = False
-
+    
     def run(self):
-        """Основной цикл парсинга"""
-        while self._running:
-            self.parse_listings()
+        self._running = True
+        self._run_iteration()
 
-            time.sleep(120)
+    def _run_iteration(self):
+        if not self._running:
+            self.finished.emit()
+            return
+        
+        self.parse_listings()  
+        # через 600 секунд запустить следующую итерацию
+        QTimer.singleShot(600_000, self._run_iteration)
 
     def parse_listings(self):
         for item_group_name in self.config.keys():
@@ -46,7 +53,7 @@ class ParserWorker(QObject):
 
                 while data is None:
                     data = self.listings.get(hash_name, 'UAH', random.choice(self.proxies))
-                    time.sleep(6)
+                    time.sleep(1)
 
                 data_to_display = [] 
 
@@ -61,7 +68,7 @@ class ParserWorker(QObject):
                     if pattern_info['is_rear'] or float_info['is_rear']:
                         diff = price_difference(item['converted_price'], min_price)
 
-                        print(pattern_info['price_tolerance'], diff, pattern_info['price_tolerance'] < diff, min_price, item['converted_price'])
+                        # print(pattern_info['price_tolerance'], diff, pattern_info['price_tolerance'] < diff, min_price, item['converted_price'])
 
                         # Если цена не соответствует ожиданиям скипаем
                         if pattern_info['price_tolerance'] < diff:
@@ -73,6 +80,10 @@ class ParserWorker(QObject):
                         converted_min_price = f"{min_price} {item['currency']['code']}"
 
                         item['converted_price'] = f"{converted_min_price} -> {item['converted_price']} {item['currency']['code']} ({diff * 100:.1f}%)"
+
+                        # Sync at time
+                        dt = datetime.now() - timedelta(minutes=5)
+                        item['sync_at'] = humanize.naturaltime(dt)
 
                         data_to_display.append(item)
 

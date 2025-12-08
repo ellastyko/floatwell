@@ -4,6 +4,7 @@ from qt.workers import ParserWorker
 
 class ParserController(QObject):
     new_data = pyqtSignal(list)
+    stopped  = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -19,8 +20,13 @@ class ParserController(QObject):
 
     def start(self):
         self.thread.start()
-
+    
     def stop(self):
-        self.worker.stop()
+        self.worker.stop()  # сигнал воркеру завершиться
+
+    def on_worker_finished(self):
         self.thread.quit()
         self.thread.wait()
+        self.stopped.emit()
+    
+parser = ParserController()

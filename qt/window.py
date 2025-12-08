@@ -6,8 +6,6 @@ from configurator import config
 from qt.widgets.sidebar import SidebarDock
 from qt.widgets.main import MainWidget
 from qt.widgets.status import StatusBar
-from qt.controllers import ParserController
-from qt.signals import data_bus
 from utils.helpers import resource_path
 
 class MainWindow(QMainWindow):
@@ -44,13 +42,6 @@ class MainWindow(QMainWindow):
         status_bar = StatusBar()
         self.setStatusBar(status_bar)
 
-        self.parser = ParserController()
-
-        # соединяем данные парсера → обновление таблицы
-        self.parser.new_data.connect(self.on_new_data)
-
-        self.parser.start()   # запускаем парсер при старте приложения
-
         self.setup_tray()
 
     def setup_tray(self):
@@ -79,11 +70,6 @@ class MainWindow(QMainWindow):
         elif reason == QTI.Context:  # ПКМ
             # Показываем меню вручную
             self.tray_menu.exec_(QtGui.QCursor.pos())
-
-    def on_new_data(self, item_data):
-        data_bus.add_items.emit(item_data)
-        
-        # self.items_table.update_row(item_data)
 
     def closeEvent(self, event):
         """Скрываем окно вместо выхода"""

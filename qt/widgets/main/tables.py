@@ -13,16 +13,18 @@ class ItemsTableWidget(QWidget):
         super().__init__()
         self._init_ui()
 
+        self.records = []
+
     def _init_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
         # 6 колонок: Name, Assets, Float, Pattern, Price, Inspect, Buy
-        self.table_widget = QTableWidget(0, 7)
+        self.table_widget = QTableWidget(0, 8)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
 
         self.table_widget.setHorizontalHeaderLabels(
-            ["Name", "Assets", "Float", "Pattern", "Price", "Inspect", "Buy"]
+            ["Name", "Assets", "Float", "Pattern", "Price", "Inspect", "Buy", "Sync At"]
         )
         self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -47,6 +49,8 @@ class ItemsTableWidget(QWidget):
                     self.table_widget.item(row, 2).setText(str(item["float"]))
                     self.table_widget.item(row, 3).setText(str(item["pattern"]))
                     self.table_widget.item(row, 4).setText(str(item["converted_price"]))
+                    self.table_widget.item(row, 7).setText(str(item["converted_price"]))
+                    self.table_widget.setItem(row, 7, QTableWidgetItem(str(item["sync_at"])))
                     found = True
                     break
 
@@ -59,7 +63,7 @@ class ItemsTableWidget(QWidget):
                 self.table_widget.setItem(row, 1, QTableWidgetItem(str(item["assets"])))
                 self.table_widget.setItem(row, 2, QTableWidgetItem(str(item["float"])))
                 self.table_widget.setItem(row, 3, QTableWidgetItem(str(item["pattern"])))
-                self.table_widget.setItem(row, 4, QTableWidgetItem(str(item["converted_price"])))
+                self.table_widget.setItem(row, 7, QTableWidgetItem(str(item["sync_at"])))
 
                 inspect_button = QPushButton("Inspect")
                 inspect_button.setCursor(Qt.PointingHandCursor)
