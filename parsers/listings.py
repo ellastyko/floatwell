@@ -131,14 +131,15 @@ class Analyzer:
         """
         self.config = config
 
-    def get_pattern_info(self, item: str, pattern: int) -> bool:
+    def get_pattern_info(self, item: str, exterior: str, pattern: int) -> bool:
         rules = self.config[item]
 
         # --- Проверяем паттерн ---
         pattern_rules = rules.get("pattern", {})
         for rank, patternInfo in pattern_rules.items():
             if pattern in patternInfo['patterns']:
-                return {"is_rear": True, "rank": rank, "price_tolerance": patternInfo["price_tolerance"], "tier": patternInfo["tier"], "value": pattern}  # редкий по паттерну
+                price_tolerance = patternInfo["price_tolerance"][exterior]
+                return {"is_rear": True, "rank": rank, "price_tolerance": price_tolerance, "tier": patternInfo["tier"], "value": pattern}  # редкий по паттерну
 
         return {"is_rear": False, "value": pattern}
     

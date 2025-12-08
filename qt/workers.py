@@ -7,13 +7,13 @@ import humanize
 from datetime import datetime, timedelta
 from qt.repositories import listing_repository
 
-EXTERIORS = [
-    "Factory New",
-    "Minimal Wear",
-    "Field-Tested",
-    "Well-Worn",
-    "Battle-Scarred"
-]
+EXTERIORS = {
+    "FN": "Factory New",
+    "MW": "Minimal Wear",
+    "FT": "Field-Tested",
+    "WW": "Well-Worn",
+    "BS": "Battle-Scarred"
+}
 
 class ListingWorker(QObject):
     ANALYZER_CONFIG_FILE = "./assets/configs/analizer.json"
@@ -48,7 +48,7 @@ class ListingWorker(QObject):
 
     def parse_listings(self):
         for item_group_name in self.config.keys():
-            for exterior in EXTERIORS:
+            for shortexterior, exterior in EXTERIORS.items():
                 hash_name, data = f"{item_group_name} ({exterior})", None
 
                 while data is None:
@@ -61,8 +61,8 @@ class ListingWorker(QObject):
 
                 for item in data:
                     # Извлекаем основную информацию
-                    pattern_info = self.analyzer.get_pattern_info(item_group_name, item['pattern'])
-                    float_info   = self.analyzer.get_float_info(item_group_name, exterior, item['float'])
+                    pattern_info = self.analyzer.get_pattern_info(item_group_name, shortexterior, item['pattern'])
+                    float_info   = self.analyzer.get_float_info(item_group_name, shortexterior, item['float'])
                     # Добавить инфу о брелках и тд
 
                     if pattern_info['is_rear'] or float_info['is_rear']:
