@@ -39,7 +39,10 @@ class Listings:
 
             if response.status_code != 200:
                 if response.status_code == 429:
-                    log_message = f"HTTP Request error ({response.status_code})"
+                    log_message = (
+                        f"HTTP Request error ({response.status_code}) via proxy {proxy['ip']}:{proxy['port']}"
+                        + (f" {proxy['country']}" if 'country' in proxy else '')
+                    )
                     log(log_message)
                     applog.log_message.emit(log_message, 'warning')
                     return 
@@ -50,7 +53,9 @@ class Listings:
             assets = data.get("assets", {}).get("730", {}).get("2", {})
 
             if not assets or not listinginfo:
-                print("Нет assets или listinginfo в ответе Steam")
+                log_message = f"Нет assets или listinginfo в ответе Steam"
+                log(log_message)
+                applog.log_message.emit(log_message, 'warning')
                 return
             
             results = []
@@ -85,7 +90,7 @@ class Listings:
                 })
             return results
         except Exception as e:
-            print("Ошибка:", e)
+            log(f"Error: {e}")
 
 # Класс отвечающий за анализ данных полученных из Listings
 class Analyzer:
