@@ -49,9 +49,13 @@ class MainWindow(QMainWindow):
 
         self.parser.start()   # запускаем парсер при старте приложения
 
+
+        self.setup_tray()
+
+    def setup_tray(self):
         # Иконка для трея
         self.tray_icon = QtWidgets.QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QtGui.QIcon("./assets/images/image.png"))
+        self.tray_icon.setIcon(QtGui.QIcon("./assets/images/logo.jpg"))
 
         # Меню трея
         tray_menu = QtWidgets.QMenu()
