@@ -1,5 +1,6 @@
 [main]
-appname = "Float Flower v0.01"
+appname="Float Flower v0.01"
+icon="./assets/images/logo.jpg"
 
 [window]
 indent=[300,300]

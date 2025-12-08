@@ -14,10 +14,10 @@ class MainWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # self.nav = NavWidget(self)
+        self.nav = NavWidget(self)
         self.view_stack = QStackedLayout()
 
-        # layout.addWidget(self.nav)
+        layout.addWidget(self.nav)
         layout.addLayout(self.view_stack, stretch=10)
 
         self.market = None

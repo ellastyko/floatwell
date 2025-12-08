@@ -3,6 +3,7 @@ import time
 from utils.requests import send_request
 from utils.logs import log
 from typing import Optional
+from qt.signals import applog
 
 # --- Настройка ---
 class Listings:
@@ -38,7 +39,9 @@ class Listings:
 
             if response.status_code != 200:
                 if response.status_code == 429:
-                    log(f"HTTP Request error ({response.status_code})")
+                    log_message = f"HTTP Request error ({response.status_code})"
+                    log(log_message)
+                    applog.log_message.emit(log_message, 'warning')
                     return 
                 
             data = response.json()
@@ -64,8 +67,11 @@ class Listings:
                 float   = self.extract_float(props)
                 inspect_link = self.get_inspect_link(listing)
 
+                log_message = f"Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}"
+
                 # Logging
-                log(f"Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}")
+                log(log_message)
+                applog.log_message.emit(log_message, 'info')
 
                 results.append({
                     "name": asset['market_hash_name'],

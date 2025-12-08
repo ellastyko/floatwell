@@ -15,8 +15,9 @@ class NavWidget(QWidget):
         # Основные кнопки режимов
 
         buttons = [
-            ("Steam Market", lambda: ui.mode.emit('market')),
+            ("Listings", lambda: ui.mode.emit('market')),
             ("Logs", lambda: ui.mode.emit('logs')),
+            ("Proxies", lambda: ui.mode.emit('proxies')),
         ]
 
         # Создаем группу для основных кнопок (работают как радио-кнопки)

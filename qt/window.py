@@ -7,6 +7,7 @@ from qt.widgets.main import MainWidget
 from qt.widgets.status import StatusBar
 from qt.controllers import ParserController
 from qt.signals import data_bus
+from utils.helpers import resource_path
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -31,7 +32,7 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
 
         self.mainWidget     = MainWidget()
-        layout.addWidget(self.mainWidget, stretch=7)
+        layout.addWidget(self.mainWidget, stretch=9)
 
         self.dockw = SidebarDock('Controller', self)
         self.dockw.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
@@ -54,7 +55,7 @@ class MainWindow(QMainWindow):
     def setup_tray(self):
         # Иконка для трея
         self.tray_icon = QtWidgets.QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QtGui.QIcon("./assets/images/logo.jpg"))
+        self.tray_icon.setIcon(QtGui.QIcon(resource_path(config['main']['icon'])))
 
         # Меню трея
         tray_menu = QtWidgets.QMenu()

@@ -5,7 +5,7 @@ class Connections(QLabel):
     def __init__(self):
         super().__init__()
         self.__init_ui()
-        self.setText(f"Agents connected: 0")
+        self.setText(f"Requests statistics: 10/10")
 
     def __init_ui(self):
         self.setAlignment(Qt.AlignVCenter)
