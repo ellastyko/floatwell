@@ -1,18 +1,3 @@
-import json 
-
-def load_config(path):
-    """Загружаем интересующие паттерны (int_value) из файла"""
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def convert_price(price, rate):
-    return round(price * rate, 2)
-
-def price_difference(current_price: float, min_price: float):
-    if min_price == 0:
-        return 0  # защита от деления на ноль
-    return (current_price - min_price) / min_price
-
 
 import requests
 from typing import Optional

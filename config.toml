@@ -1,5 +1,5 @@
 [main]
-appname = "Desktop Steam Market"
+appname = "Float Flower v0.01"
 
 [window]
 indent=[300,300]
@@ -10,6 +10,3 @@ minh=360
 
 [synchronisations]
 currency="UAH"
-request_interval=12
-cycle_interval=120
-error_interval=1200

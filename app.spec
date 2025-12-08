@@ -14,8 +14,10 @@ a = Analysis(
 
         ('assets/configs/analizer.json', 'assets/configs'),
         ('assets/configs/app.json', 'assets/configs'),
+        ('storage/logs/', 'storage/logs'),
+        ('config.toml', '.'),  
     ],
-    hiddenimports=[],
+    hiddenimports=["PyQt5.QtCore", "PyQt5.QtGui", "PyQt5.QtWidgets"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -33,12 +35,12 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='floatme',  # Замените на имя своего exe
+    name='floatflower',  
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # True если нужна консоль при запуске
+    console=False,  
 )
 
 coll = COLLECT(
@@ -49,5 +51,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='agent',  # Директория с exe
+    name='app',  # Директория с exe
 )

@@ -1,7 +1,8 @@
 from PyQt5.QtCore import QObject, pyqtSignal
 import time
 from parsers.listings import Listings, Analyzer
-from utils import load_config, price_difference, convert_price
+from utils.helpers import load_config
+from utils.market import price_difference, convert_price
 import random
 
 EXTERIORS = [

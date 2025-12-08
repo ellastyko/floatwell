@@ -1,17 +1,8 @@
-from datetime import datetime
 from urllib.parse import quote
 import time
-from utils import send_request
+from utils.requests import send_request
+from utils.logs import log
 from typing import Optional
-
-LOG_FILE = "./storage/logs/parsing.txt"
-
-def log(message: str):
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(message + "\n")
-
-def formattedTime():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # --- Настройка ---
 class Listings:
@@ -47,7 +38,7 @@ class Listings:
 
             if response.status_code != 200:
                 if response.status_code == 429:
-                    log(f"{formattedTime()} HTTP Request error ({response.status_code})")
+                    log(f"HTTP Request error ({response.status_code})")
                     return 
                 
             data = response.json()
@@ -74,7 +65,7 @@ class Listings:
                 inspect_link = self.get_inspect_link(listing)
 
                 # Logging
-                log(f"{formattedTime()} | Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}")
+                log(f"Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}")
 
                 results.append({
                     "name": asset['market_hash_name'],
