@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QWidget, QDockWidget
 from PyQt5.QtCore import Qt
+from PyQt5 import QtWidgets, QtGui, QtCore
 from configurator import config
 from qt.widgets.sidebar import SidebarDock
 from qt.widgets.main import MainWidget
@@ -48,10 +49,34 @@ class MainWindow(QMainWindow):
 
         self.parser.start()   # запускаем парсер при старте приложения
 
+        # Иконка для трея
+        self.tray_icon = QtWidgets.QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QtGui.QIcon("./assets/images/image.png"))
+
+        # Меню трея
+        tray_menu = QtWidgets.QMenu()
+
+        show_action = tray_menu.addAction("Показать")
+        quit_action = tray_menu.addAction("Выход")
+
+        show_action.triggered.connect(self.show)
+        quit_action.triggered.connect(QtWidgets.qApp.quit)
+
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.show()
+
     def on_new_data(self, item_data):
         data_bus.add_items.emit(item_data)
         
         # self.items_table.update_row(item_data)
 
     def closeEvent(self, event):
-        super().closeEvent(event)
+        """Скрываем окно вместо выхода"""
+        event.ignore()
+        self.hide()
+        self.tray_icon.showMessage(
+            "Приложение работает",
+            "Окно закрыто, но программа продолжает работать в фоне.",
+            QtWidgets.QSystemTrayIcon.Information,
+            2000
+        )

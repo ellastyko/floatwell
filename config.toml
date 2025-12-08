@@ -8,5 +8,8 @@ height=720
 minw=640
 minh=360
 
-[basic]
+[synchronisations]
 currency="UAH"
+request_interval=12
+cycle_interval=120
+error_interval=1200

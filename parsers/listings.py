@@ -1,12 +1,24 @@
-import requests
-import json
 from datetime import datetime
 from urllib.parse import quote
 import time
+from utils import send_request
+from typing import Optional
+
+LOG_FILE = "./storage/logs/parsing.txt"
+
+def log(message: str):
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(message + "\n")
+
+def formattedTime():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # --- Настройка ---
 class Listings:
     BASE_URL  = 'https://steamcommunity.com/market/listings/730'
+
+    def __init__(self, error_timeout = 1):
+        self.error_timeout = error_timeout
 
     def extract_pattern(self, asset_properties: list) -> int | None:
         """Достаёт int_value из propertyid = 1"""
@@ -22,25 +34,27 @@ class Listings:
                 return float(p["float_value"]) 
         return None
 
-    def get(self, hash_name: str):
+    def get(self, hash_name: str, proxy: Optional[dict] = None):
         try:
             url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency=1&norender=1"
 
-            response = requests.get(url)
-            data = response.json()
+            response = send_request(url, proxy)
 
             if response.status_code != 200:
                 if response.status_code == 429:
-                    time.sleep(30)
-                    return
+                    log(f"{formattedTime()} HTTP Request error ({response.status_code})")
+                    return 
+                
+            data = response.json()
             
-            results = []
             listinginfo = data.get("listinginfo", {})
             assets = data.get("assets", {}).get("730", {}).get("2", {})
 
             if not assets or not listinginfo:
                 print("Нет assets или listinginfo в ответе Steam")
                 return
+            
+            results = []
 
             for listing_id, listing in listinginfo.items():
                 asset_id = listing['asset']['id']
@@ -53,19 +67,23 @@ class Listings:
                 pattern = self.extract_pattern(props)
                 float   = self.extract_float(props)
 
+                # Logging
+                log(f"{formattedTime()} | Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}")
+
                 results.append({
                     "name": asset['market_hash_name'],
                     "listing_id": listing_id,
                     "pattern": pattern,
                     "float": float,
-                    "price": listing['price'],
+                    "price": (int(listing['price']) + int(listing['fee'])) / 100,
                     'assets': None,
-                    'buy_url': f"https://steamcommunity.com/market/listings/730/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
+                    'buy_url': f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
                 })
             return results
         except Exception as e:
             print("Ошибка:", e)
 
+# Класс отвечающий за анализ данных полученных из Listings
 class Analyzer:
     def __init__(self, config: dict):
         """
@@ -86,7 +104,7 @@ class Analyzer:
         """
         self.config = config
 
-    def is_rare_pattern(self, item: str, pattern: int) -> bool:
+    def get_pattern_info(self, item: str, pattern: int) -> bool:
         if item not in self.config:
             return False
 
@@ -94,13 +112,13 @@ class Analyzer:
 
         # --- Проверяем паттерн ---
         pattern_rules = rules.get("pattern", {})
-        for rank, patterns in pattern_rules.items():
-            if pattern in patterns:
-                return rank  # редкий по паттерну
+        for rank, patternInfo in pattern_rules.items():
+            if pattern in patternInfo['patterns']:
+                return {"is_rear": True, "rank": rank, "price_tolerance": patternInfo["price_tolerance"]}  # редкий по паттерну
 
-        return False
+        return {"is_rear": False}
     
-    def is_rare_float(self, item: str, exterior: str, float_value: float) -> bool:
+    def get_float_info(self, item: str, exterior: str, float_value: float) -> bool:
         if item not in self.config:
             return False
 
@@ -111,8 +129,8 @@ class Analyzer:
         if exterior and exterior in float_rules:
             frange = float_rules[exterior]
             if frange["min"] <= float_value <= frange["max"]:
-                return True  # редкий по флоату
+                return {"is_rear": True}
 
-        return False
+        return {"is_rear": False}
 
 

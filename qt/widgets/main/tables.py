@@ -46,7 +46,7 @@ class ItemsTableWidget(QWidget):
                     self.table_widget.item(row, 1).setText(str(item["assets"]))
                     self.table_widget.item(row, 2).setText(str(item["float"]))
                     self.table_widget.item(row, 3).setText(str(item["pattern"]))
-                    self.table_widget.item(row, 4).setText(str(item["price"]))
+                    self.table_widget.item(row, 4).setText(str(item["converted_price"]))
                     found = True
                     break
 
@@ -59,7 +59,7 @@ class ItemsTableWidget(QWidget):
                 self.table_widget.setItem(row, 1, QTableWidgetItem(str(item["assets"])))
                 self.table_widget.setItem(row, 2, QTableWidgetItem(str(item["float"])))
                 self.table_widget.setItem(row, 3, QTableWidgetItem(str(item["pattern"])))
-                self.table_widget.setItem(row, 4, QTableWidgetItem(str(item["price"])))
+                self.table_widget.setItem(row, 4, QTableWidgetItem(str(item["converted_price"])))
 
                 buy_button = QPushButton("Buy")
                 buy_button.setCursor(Qt.PointingHandCursor)
