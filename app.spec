@@ -53,5 +53,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='app',  # Директория с exe
+    name='Float Flower v0.01',  # Директория с exe
 )

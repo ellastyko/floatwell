@@ -5,11 +5,11 @@ from PyQt5 import QtGui
 from utils.helpers import resource_path
 from configurator import config
 
-# -------------------------------
-# Создаём папку для логов
-logs_path = os.path.join(os.path.abspath("."), "storage", "logs")
-os.makedirs(logs_path, exist_ok=True)
-# -------------------------------
+# # -------------------------------
+# # Создаём папку для логов
+# logs_path = os.path.join(os.path.abspath("."), "storage", "logs")
+# os.makedirs(logs_path, exist_ok=True)
+# # -------------------------------
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
