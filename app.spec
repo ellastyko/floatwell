@@ -9,12 +9,12 @@ a = Analysis(
     datas=[
         ('assets/proxies.json', 'assets'),
         ('assets/currencies.json', 'assets'),
+        ('assets/app.json', 'assets'),
         
         ('assets/images/logo.jpg', 'assets/images'),
-        ('assets/images/image.png', 'assets/images'),
 
-        ('assets/configs/analizer.json', 'assets/configs'),
-        ('assets/configs/app.json', 'assets/configs'),
+        ('assets/configs/rare.json', 'assets/configs'),
+        ('assets/configs/attachments.json', 'assets/configs'),
 
         ('storage/logs/', 'storage/logs'),
         ('config.toml', '.'),  

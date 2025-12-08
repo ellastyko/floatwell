@@ -31,12 +31,12 @@ class ListingsRepository(QObject):
             if item['pattern']['is_rear']:
                 pattern_col = f"{ item['pattern']['value']} ({item['pattern']['rank']})"
             else:
-                pattern_col = item['pattern_col']['value']
+                pattern_col = item['pattern']['value']
 
             rows.append({
                 'name_col': item['name'],
                 'listing_id_col': item['listing_id'],
-                'assets_col': item['assets'],
+                'assets_col': ", ".join(item["name"] for item in item['assets']),
                 'float_col': item['float']['value'],
                 'pattern_col': pattern_col,
                 'converted_price_col': f"{item['converted_min_price']} {item['currency_code']} -> {item['converted_price']} {item['currency_code']} ({price_diff}%)",

@@ -5,11 +5,13 @@ from utils.logs import log
 from utils.helpers import load_json_resource
 from typing import Optional
 from qt.signals import applog
+import re
+from typing import List, Dict, Any
 
 # --- Настройка ---
 class Listings:
     CURRENCIES_PATH = './assets/currencies.json'
-    BASE_URL  = 'https://steamcommunity.com/market/listings/730'
+    BASE_URL        = 'https://steamcommunity.com/market/listings/730'
 
     def __init__(self, error_timeout = 1):
         self.error_timeout = error_timeout
@@ -44,7 +46,36 @@ class Listings:
         raw_inspect_link = listing['asset']['market_actions'][0]['link']
         
         return raw_inspect_link.replace("%listingid%", listing['listingid']).replace("%assetid%", listing['asset']['id'])
-    
+
+    def get_assets(self, descriptions: List[Dict[str, Any]]):
+        """Возвращает список стикеров/чармов, прикреплённых к предмету."""
+        items = []
+
+        for desc in descriptions:
+            name = desc.get("name", "")
+            html = desc.get("value", "")
+
+            # Определяем тип предметов внутри блока
+            if name not in ("sticker_info", "keychain_info"):
+                continue
+
+            block_type = "sticker" if name == "sticker_info" else "keychain"
+
+            # Ищем <img ... src="" title="">
+            matches = re.findall(
+                r'<img[^>]*src="([^"]+)"[^>]*title="([^"]+)"',
+                html
+            )
+
+            for image, title in matches:
+                items.append({
+                    "type": block_type,
+                    "name": title,
+                    "image": image
+                })
+
+        return items
+
     def get(self, hash_name: str, currency_code = 'USD', proxy: Optional[dict] = None):
         try:
             currency = self.get_currency(currency_code)
@@ -84,14 +115,13 @@ class Listings:
                 if not props:
                     continue
 
-                pattern = self.extract_pattern(props)
-                float   = self.extract_float(props)
+                pattern      = self.extract_pattern(props)
+                float        = self.extract_float(props)
                 inspect_link = self.get_inspect_link(listing)
-
-                log_message = f"Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}"
+                assets_list  = self.get_assets(asset['descriptions'])
 
                 # Logging
-                log(log_message)
+                log_message = f"Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}"
                 applog.log_message.emit(log_message, 'info')
 
                 results.append({
@@ -102,7 +132,9 @@ class Listings:
                     "price": (int(listing['price']) + int(listing['fee'])) / 100,
                     "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
                     "currency": currency,
-                    'assets': None,
+                    'assets': assets_list,
+                    'has_keychain': any(item["type"] == "keychain" for item in assets_list),
+                    'has_stickers': any(item["type"] == "sticker" for item in assets_list),
                     'buy_url': f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
                     'inspect_link': inspect_link
                 })
@@ -136,6 +168,7 @@ class Analyzer:
 
         # --- Проверяем паттерн ---
         pattern_rules = rules.get("pattern", {})
+
         for rank, patternInfo in pattern_rules.items():
             if pattern in patternInfo['patterns']:
                 price_tolerance = patternInfo["price_tolerance"][exterior]

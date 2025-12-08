@@ -16,19 +16,19 @@ EXTERIORS = {
 }
 
 class ListingWorker(QObject):
-    ANALYZER_CONFIG_FILE = "./assets/configs/analizer.json"
-    PROXIES              = "./assets/proxies.json"
+    ITEMS_SOURCE = "./assets/configs/rare.json"
+    PROXIES      = "./assets/proxies.json"
 
     finished    = pyqtSignal()       # если нужно корректно завершить поток
 
     def __init__(self):
         super().__init__()
         self._running = False
-        self.config  = load_json_resource(self.ANALYZER_CONFIG_FILE)
+        self.source  = load_json_resource(self.ITEMS_SOURCE)
         self.proxies = load_json_resource(self.PROXIES)
 
         self.listings = Listings()
-        self.analyzer = Analyzer(self.config)
+        self.analyzer = Analyzer(self.source['data'])
 
     def stop(self):
         self._running = False
@@ -47,46 +47,53 @@ class ListingWorker(QObject):
         QTimer.singleShot(600_000, self._run_iteration)
 
     def parse_listings(self):
-        for item_group_name in self.config.keys():
+        source_filters = self.source['filters']
+
+        for item_group_name in self.source['data'].keys():
             for shortexterior, exterior in EXTERIORS.items():
                 hash_name, data = f"{item_group_name} ({exterior})", None
 
                 while data is None:
-                    data = self.listings.get(hash_name, 'UAH', random.choice(self.proxies))
-                    time.sleep(1)
+                    data = self.listings.get(hash_name, 'UAH') # random.choice(self.proxies)
+                    
+                    time.sleep(1) 
 
                 data_to_display = [] 
 
-                min_price = min(item['converted_price'] for item in data if item.get('converted_price'))
-
                 for item in data:
+                    min_price = min(item['converted_price'] for item in data if item.get('converted_price'))
+
                     # Извлекаем основную информацию
                     pattern_info = self.analyzer.get_pattern_info(item_group_name, shortexterior, item['pattern'])
                     float_info   = self.analyzer.get_float_info(item_group_name, shortexterior, item['float'])
                     # Добавить инфу о брелках и тд
 
-                    if pattern_info['is_rear'] or float_info['is_rear']:
-                        diff = price_difference(item['converted_price'], min_price)
+                    diff = price_difference(item['converted_price'], min_price)
 
-                        # Если цена не соответствует ожиданиям скипаем
-                        if pattern_info['price_tolerance'] < diff:
-                            continue
-
-                        data_to_display.append({
-                            "name":         item['name'],
-                            "listing_id":   item['listing_id'],
-                            'assets':       item['assets'],
-                            'buy_url':      item['buy_url'],
-                            'inspect_link': item['inspect_link'],
-                            'pattern':      pattern_info,
-                            'float':        float_info,
-                            'currency_code':       item['currency']['code'],
-                            'diff':                diff,
-                            'converted_min_price': min_price, 
-                            'converted_price':     item['converted_price'], 
-                            'sync_at':             datetime.now().strftime("%H:%M:%S")
-                        })
-
+                    if 'pattern' in source_filters and (pattern_info['is_rear'] is False or pattern_info['price_tolerance'] < diff):
+                        continue
+                    # if 'float' in source_filters and not float_info['is_rear']:
+                    #     continue
+                    if 'keychains' in source_filters and not item['has_keychain']:
+                        continue
+                    if 'stickers' in source_filters and not item['has_sticker']:
+                        continue
+                    
+                    data_to_display.append({
+                        "name":         item['name'],
+                        "listing_id":   item['listing_id'],
+                        'assets':       item['assets'],
+                        'buy_url':      item['buy_url'],
+                        'inspect_link': item['inspect_link'],
+                        'pattern':      pattern_info,
+                        'float':        float_info,
+                        'currency_code':       item['currency']['code'],
+                        'diff':                diff,
+                        'converted_min_price': min_price, 
+                        'converted_price':     item['converted_price'], 
+                        'sync_at':             datetime.now().strftime("%H:%M:%S")
+                    })
+                
                 listing_repository.add_items.emit(data_to_display)
                 
                 time.sleep(12)

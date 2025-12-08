@@ -33,6 +33,7 @@ class ItemsTableWidget(QWidget):
         # Настроим размеры колонок
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # Name
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Assets
+        # header.setMaximumSectionSize(300) 
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Float
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Pattern
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Price
