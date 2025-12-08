@@ -49,7 +49,6 @@ class MainWindow(QMainWindow):
 
         self.parser.start()   # запускаем парсер при старте приложения
 
-
         self.setup_tray()
 
     def setup_tray(self):

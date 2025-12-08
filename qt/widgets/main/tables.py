@@ -17,12 +17,12 @@ class ItemsTableWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # 6 колонок: Name, Assets, Float, Pattern, Price, Buy
-        self.table_widget = QTableWidget(0, 6)
+        # 6 колонок: Name, Assets, Float, Pattern, Price, Inspect, Buy
+        self.table_widget = QTableWidget(0, 7)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
 
         self.table_widget.setHorizontalHeaderLabels(
-            ["Name", "Assets", "Float", "Pattern", "Price", "Buy"]
+            ["Name", "Assets", "Float", "Pattern", "Price", "Inspect", "Buy"]
         )
         self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -61,10 +61,15 @@ class ItemsTableWidget(QWidget):
                 self.table_widget.setItem(row, 3, QTableWidgetItem(str(item["pattern"])))
                 self.table_widget.setItem(row, 4, QTableWidgetItem(str(item["converted_price"])))
 
+                inspect_button = QPushButton("Inspect")
+                inspect_button.setCursor(Qt.PointingHandCursor)
+                inspect_button.clicked.connect(lambda _, url=item["inspect_link"]: webbrowser.open(url))
+                self.table_widget.setCellWidget(row, 5, inspect_button)
+
                 buy_button = QPushButton("Buy")
                 buy_button.setCursor(Qt.PointingHandCursor)
                 buy_button.clicked.connect(lambda _, url=item["buy_url"]: webbrowser.open(url))
-                self.table_widget.setCellWidget(row, 5, buy_button)
+                self.table_widget.setCellWidget(row, 6, buy_button)
             
             # ---- Подсветка строки, если нужно ----
             # if item['is_highlighted']:

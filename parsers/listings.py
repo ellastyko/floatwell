@@ -34,6 +34,11 @@ class Listings:
                 return float(p["float_value"]) 
         return None
 
+    def get_inspect_link(self, listing):
+        raw_inspect_link = listing['asset']['market_actions'][0]['link']
+        
+        return raw_inspect_link.replace("%listingid%", listing['listingid']).replace("%assetid%", listing['asset']['id'])
+    
     def get(self, hash_name: str, proxy: Optional[dict] = None):
         try:
             url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency=1&norender=1"
@@ -66,6 +71,7 @@ class Listings:
 
                 pattern = self.extract_pattern(props)
                 float   = self.extract_float(props)
+                inspect_link = self.get_inspect_link(listing)
 
                 # Logging
                 log(f"{formattedTime()} | Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}")
@@ -78,6 +84,7 @@ class Listings:
                     "price": (int(listing['price']) + int(listing['fee'])) / 100,
                     'assets': None,
                     'buy_url': f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
+                    'inspect_link': inspect_link
                 })
             return results
         except Exception as e:
