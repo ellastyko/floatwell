@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(status_bar)
 
         self.setup_tray()
+        
 
     def setup_tray(self):
         # Иконка трея

@@ -5,7 +5,6 @@ from .styles import *
 from qt.widgets.components.inputs import create_labeled_combobox
 from qt.widgets.components.buttons import PushButton
 from qt.controllers import parser
-from qt.signals import data_bus
 
 class ProxiesPanel(QGroupBox):
     def __init__(self):
@@ -70,17 +69,7 @@ class ControlPanel(QGroupBox):
         # layout.addWidget(self.restart_btn)
         layout.addWidget(self.pause_btn)
     
-    def on_new_data(self, item_data):
-        data_bus.add_items.emit(item_data)
-     
     def on_run(self):
-        # если слот ещё не подключен — подключаем
-        try:
-            parser.new_data.disconnect(self.on_new_data)
-        except TypeError:
-            pass
-        parser.new_data.connect(self.on_new_data)
-
         # кнопки
         self.run_parsing_btn.setEnabled(False)
         self.pause_btn.setEnabled(True)

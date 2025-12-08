@@ -16,16 +16,11 @@ class EventDispatcher(QObject):
 
     connections_status = pyqtSignal(str)
 
-class DataBus(QObject):
-    update_items = pyqtSignal(list)
-    add_items    = pyqtSignal(list)
-
 class AppLogSignals(QObject):
     log_message = pyqtSignal(str, str)
     clear_logs  = pyqtSignal()
 
 # Глобальный синглтон
 ui          = UIController()
-data_bus    = DataBus()
 applog      = AppLogSignals()
 dispatcher  = EventDispatcher()

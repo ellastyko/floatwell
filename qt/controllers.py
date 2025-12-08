@@ -1,22 +1,18 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import QObject, pyqtSignal
-from qt.workers import ParserWorker
+from qt.workers import ListingWorker
 
 class ParserController(QObject):
-    new_data = pyqtSignal(list)
     stopped  = pyqtSignal()
 
     def __init__(self):
         super().__init__()
         self.thread = QThread()
-        self.worker = ParserWorker()
+        self.worker = ListingWorker()
         self.worker.moveToThread(self.thread)
 
         # когда поток стартует → запускаем метод parsera
         self.thread.started.connect(self.worker.run)
-
-        # данные идут наружу
-        self.worker.data_parsed.connect(self.new_data.emit)
 
     def start(self):
         self.thread.start()

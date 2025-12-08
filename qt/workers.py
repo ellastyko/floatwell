@@ -5,6 +5,7 @@ from utils.helpers import load_json_resource
 from utils.market import price_difference
 import humanize
 from datetime import datetime, timedelta
+from qt.repositories import listing_repository
 
 EXTERIORS = [
     "Factory New",
@@ -14,11 +15,10 @@ EXTERIORS = [
     "Battle-Scarred"
 ]
 
-class ParserWorker(QObject):
+class ListingWorker(QObject):
     ANALYZER_CONFIG_FILE = "./assets/configs/analizer.json"
     PROXIES              = "./assets/proxies.json"
 
-    data_parsed = pyqtSignal(list)   # сигнал при обновлении данных
     finished    = pyqtSignal()       # если нужно корректно завершить поток
 
     def __init__(self):
@@ -68,25 +68,25 @@ class ParserWorker(QObject):
                     if pattern_info['is_rear'] or float_info['is_rear']:
                         diff = price_difference(item['converted_price'], min_price)
 
-                        # print(pattern_info['price_tolerance'], diff, pattern_info['price_tolerance'] < diff, min_price, item['converted_price'])
-
                         # Если цена не соответствует ожиданиям скипаем
                         if pattern_info['price_tolerance'] < diff:
                             continue
 
-                        if pattern_info['is_rear']:
-                            item['pattern'] = f"{ item['pattern']} ({pattern_info['rank']})"
+                        data_to_display.append({
+                            "name":         item['name'],
+                            "listing_id":   item['listing_id'],
+                            'assets':       item['assets'],
+                            'buy_url':      item['buy_url'],
+                            'inspect_link': item['inspect_link'],
+                            'pattern':      pattern_info,
+                            'float':        float_info,
+                            'currency_code':       item['currency']['code'],
+                            'diff':                diff,
+                            'converted_min_price': min_price, 
+                            'converted_price':     item['converted_price'], 
+                            'sync_at':             datetime.now().strftime("%H:%M:%S")
+                        })
 
-                        converted_min_price = f"{min_price} {item['currency']['code']}"
-
-                        item['converted_price'] = f"{converted_min_price} -> {item['converted_price']} {item['currency']['code']} ({diff * 100:.1f}%)"
-
-                        # Sync at time
-                        dt = datetime.now() - timedelta(minutes=5)
-                        item['sync_at'] = humanize.naturaltime(dt)
-
-                        data_to_display.append(item)
-
-                self.data_parsed.emit(data_to_display)
+                listing_repository.add_items.emit(data_to_display)
                 
                 time.sleep(12)

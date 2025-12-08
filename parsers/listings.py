@@ -132,23 +132,17 @@ class Analyzer:
         self.config = config
 
     def get_pattern_info(self, item: str, pattern: int) -> bool:
-        if item not in self.config:
-            return False
-
         rules = self.config[item]
 
         # --- Проверяем паттерн ---
         pattern_rules = rules.get("pattern", {})
         for rank, patternInfo in pattern_rules.items():
             if pattern in patternInfo['patterns']:
-                return {"is_rear": True, "rank": rank, "price_tolerance": patternInfo["price_tolerance"]}  # редкий по паттерну
+                return {"is_rear": True, "rank": rank, "price_tolerance": patternInfo["price_tolerance"], "tier": patternInfo["tier"], "value": pattern}  # редкий по паттерну
 
-        return {"is_rear": False}
+        return {"is_rear": False, "value": pattern}
     
     def get_float_info(self, item: str, exterior: str, float_value: float) -> bool:
-        if item not in self.config:
-            return False
-
         rules = self.config[item]
 
         # --- Проверяем флоат ---
@@ -156,8 +150,8 @@ class Analyzer:
         if exterior and exterior in float_rules:
             frange = float_rules[exterior]
             if frange["min"] <= float_value <= frange["max"]:
-                return {"is_rear": True}
+                return {"is_rear": True, "value": float_value}
 
-        return {"is_rear": False}
+        return {"is_rear": False, "value": float_value}
 
 
