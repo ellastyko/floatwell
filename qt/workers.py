@@ -54,9 +54,12 @@ class ListingWorker(QObject):
                 hash_name, data = f"{item_group_name} ({exterior})", None
 
                 while data is None:
-                    data = self.listings.get(hash_name, 'UAH') # random.choice(self.proxies)
+                    data = self.listings.get(hash_name, 'UAH', random.choice(self.proxies))
                     
-                    time.sleep(1) 
+                    if data is None:
+                        time.sleep(1) 
+                    else:
+                        break 
 
                 data_to_display = [] 
 
