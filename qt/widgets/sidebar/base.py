@@ -21,33 +21,31 @@ class SidebarDock(QDockWidget):
         # Основной layout для контейнера
         layout = QVBoxLayout(container)
         
-        self.settings_widget  = ProxiesPanel()
-        self.control_widget   = ControlPanel()
+        self.toolbox = QToolBox()
+        self.toolbox.setStyleSheet(StyleManager.get_style("QToolBox"))
+        layout.addWidget(self.toolbox)
         
-        layout.addWidget(self.settings_widget, stretch=3)
-        layout.addWidget(self.control_widget, stretch=2)
-        
+        # Добавляем разделы в ToolBox
+        self._add_sections()
         
         # Добавляем растягивающийся элемент внизу
         layout.addStretch()
 
     def _add_sections(self):
         """Добавляем разделы в ToolBox"""
-        # Videocapture
-        vcapture_section = QWidget()
-        vcapture_section.setStyleSheet('background-color: #212327; border-radius: 0 0 5px 5px;')
-        vcapture_layout = QVBoxLayout(vcapture_section)
-
-        vcapture_layout.addWidget(PushButton("Start"))
-        vcapture_layout.addStretch()
-        self.toolbox.addItem(vcapture_section, "Videocapture")
         
-        # Settings
-        section2 = QWidget()
-        section2.setStyleSheet('background-color: #212327;')
-        section2_layout = QVBoxLayout(section2)
-        section2_layout.addWidget(QLabel("Settings"))
-        section2_layout.addWidget(PushButton("Apply"))
-        section2_layout.addStretch()
-        self.toolbox.addItem(section2, "Settings")
+        # --- Settings (ProxiesPanel) ---
+        self.settings_widget = ProxiesPanel()
+        self.settings_widget.setStyleSheet(
+            'background-color: #212327; border-radius: 0 0 5px 5px;'
+        )
+
+        # Кладём виджет напрямую, ЛЭЙАУТ НЕ МЕНЯЕМ
+        # self.toolbox.addItem(self.settings_widget, "Settings")
+
+        # --- Controller (ControlPanel) ---
+        controller_widget = ControlPanel()
+        controller_widget.setStyleSheet("background-color: #212327;")
+
+        self.toolbox.addItem(controller_widget, "Controller")
 

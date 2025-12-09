@@ -22,10 +22,10 @@ class ItemsTableWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.table_widget = QTableWidget(0, 8)
+        self.table_widget = QTableWidget(0, 9)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
         self.table_widget.setHorizontalHeaderLabels(
-            ["Name", "Assets", "Float", "Pattern", "Price", "Inspect", "Buy", "Sync At"]
+            ["Name", "Assets", "Float", "Pattern", "Price", "Sync At", "Inspect", "Steam", "Actions"]
         )
 
         header = self.table_widget.horizontalHeader()
@@ -37,14 +37,16 @@ class ItemsTableWidget(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Float
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Pattern
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Price
-        header.setSectionResizeMode(5, QHeaderView.Fixed)  # Inspect (кнопка)
-        header.setSectionResizeMode(6, QHeaderView.Fixed)  # Buy (кнопка)
-        header.setSectionResizeMode(7, QHeaderView.Fixed)  # Sync At
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Sync At
+        header.setSectionResizeMode(6, QHeaderView.Fixed)  # Inspect (кнопка)
+        header.setSectionResizeMode(7, QHeaderView.Fixed)  # Buy (кнопка)
+        header.setSectionResizeMode(8, QHeaderView.Fixed)
 
+        self.table_widget.setColumnWidth(5, 120)  # меньше, чем растягиваемые колонки
         # Фиксируем ширину для кнопок и Sync At
-        self.table_widget.setColumnWidth(5, 80)
         self.table_widget.setColumnWidth(6, 80)
-        self.table_widget.setColumnWidth(7, 120)  # меньше, чем растягиваемые колонки
+        self.table_widget.setColumnWidth(7, 80)
+        self.table_widget.setColumnWidth(8, 80)
 
         table_box = QGroupBox(" Listings ")
         table_layout = QVBoxLayout()
@@ -62,17 +64,25 @@ class ItemsTableWidget(QWidget):
             self.table_widget.setItem(0, 2, QTableWidgetItem(str(item["float_col"])))
             self.table_widget.setItem(0, 3, QTableWidgetItem(str(item["pattern_col"])))
             self.table_widget.setItem(0, 4, QTableWidgetItem(str(item["converted_price_col"])))
-            self.table_widget.setItem(0, 7, QTableWidgetItem(str(item["sync_at_col"])))
+            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["sync_at_col"])))
 
             inspect_button = QPushButton("Inspect")
             inspect_button.setCursor(Qt.PointingHandCursor)
             inspect_button.clicked.connect(lambda _, url=item["inspect_link_col"]: webbrowser.open(url))
-            self.table_widget.setCellWidget(0, 5, inspect_button)
+            self.table_widget.setCellWidget(0, 6, inspect_button)
 
             buy_button = QPushButton("Buy")
             buy_button.setCursor(Qt.PointingHandCursor)
             buy_button.clicked.connect(lambda _, url=item["buy_url_col"]: webbrowser.open(url))
-            self.table_widget.setCellWidget(0, 6, buy_button)
+            self.table_widget.setCellWidget(0, 7, buy_button)
+
+             # Remove — ★ new ★
+            remove_button = QPushButton("Remove")
+            remove_button.setCursor(Qt.PointingHandCursor)
+            remove_button.clicked.connect(
+                lambda _, btn=remove_button: self.remove_row(btn)
+            )
+            self.table_widget.setCellWidget(0, 8, remove_button)
             
             # ---- Подсветка строки, если нужно ----
             # if item['is_highlighted']:
@@ -82,6 +92,11 @@ class ItemsTableWidget(QWidget):
             #             cell_item.setBackground(QColor("#25A550"))  # светло-жёлтая подсветка
             #             cell_item.setForeground(QColor("#000000"))  # черный текст
         
+    def remove_row(self, button):
+        index = self.table_widget.indexAt(button.pos())
+        row = index.row()
+        if row >= 0:
+            self.table_widget.removeRow(row)
 
     def reset_table(self):
         self.table_widget.setRowCount(0)

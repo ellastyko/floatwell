@@ -86,13 +86,12 @@ class Listings:
 
             if response.status_code != 200:
                 if response.status_code == 429:
-                    log_message = (
-                        f"HTTP Request error ({response.status_code}) via proxy {proxy['ip']}:{proxy['port']}"
-                        + (f" {proxy['country']}" if 'country' in proxy else '')
-                    )
-                    log(log_message)
+                    log_message = (f"HTTP Request error ({response.status_code}) via proxy {proxy['ip']}:{proxy['port']}" )
                     applog.log_message.emit(log_message, 'warning')
                     return 
+
+            log_message = f"Successful HTTP request via proxy {proxy['ip']}:{proxy['port']}"
+            applog.log_message.emit(log_message, 'success')
                 
             data = response.json()
             
@@ -100,8 +99,7 @@ class Listings:
             assets = data.get("assets", {}).get("730", {}).get("2", {})
 
             if not assets or not listinginfo:
-                log_message = f"Нет assets или listinginfo в ответе Steam"
-                log(log_message)
+                log_message = f"No assets or listinginfo"
                 applog.log_message.emit(log_message, 'warning')
                 return
             
@@ -121,7 +119,7 @@ class Listings:
                 assets_list  = self.get_assets(asset['descriptions'])
 
                 # Logging
-                log_message = f"Name: {asset['market_hash_name']}; Listing id: {listing_id}; Pattern: {pattern}; Float: {float}"
+                log_message = f"{asset['market_hash_name']}; Listing: {listing_id}; Pattern: {pattern}; Float: {float}"
                 applog.log_message.emit(log_message, 'info')
 
                 results.append({

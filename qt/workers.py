@@ -49,6 +49,9 @@ class ListingWorker(QObject):
     def parse_listings(self):
         source_filters = self.source['filters']
 
+        # loader.set_max(len(self.source['data']) * len(EXTERIORS))
+        # loader.set_value_signal(0)
+
         for item_group_name in self.source['data'].keys():
             for shortexterior, exterior in EXTERIORS.items():
                 hash_name, data = f"{item_group_name} ({exterior})", None
@@ -60,6 +63,8 @@ class ListingWorker(QObject):
                         time.sleep(1) 
                     else:
                         break 
+                
+                # loader.set_value_signal(loader.get_value() + 1)
 
                 data_to_display = [] 
 

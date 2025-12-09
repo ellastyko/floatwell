@@ -5,6 +5,7 @@ from .styles import *
 from qt.widgets.components.inputs import create_labeled_combobox
 from qt.widgets.components.buttons import PushButton
 from qt.controllers import parser
+from qt.widgets.components.bars import LoadingBar
 
 class ProxiesPanel(QGroupBox):
     def __init__(self):
@@ -45,16 +46,13 @@ class ControlPanel(QGroupBox):
             color: white;
         """)
 
+        container, combo = create_labeled_combobox("Source:")
+        
+        combo.addItems(['1x1', '2x2', '3x3'])
+        combo.currentTextChanged.connect(self.source_changed)
+
         # Создаем заголовок
-        self.label_title = QLabel("Controller")
-        self.label_title.setStyleSheet("""
-            font-size: 14px;
-            font-weight: bold;
-            background-color: #212121; 
-            padding: 5px;
-            margin-bottom: 10px;
-        """)
-        self.label_title.setAlignment(Qt.AlignCenter)
+        self.loader = LoadingBar()
 
         self.run_parsing_btn = PushButton("Run parsing")
         # self.restart_btn = PushButton("Restart")
@@ -63,11 +61,15 @@ class ControlPanel(QGroupBox):
         # self.restart_btn.clicked.connect(self.on_restart)
         self.pause_btn.clicked.connect(self.on_pause)
 
-        layout.addWidget(self.label_title, 1)
+        layout.addWidget(container)
         layout.addStretch(8)
+        layout.addWidget(self.loader)
         layout.addWidget(self.run_parsing_btn)
         # layout.addWidget(self.restart_btn)
         layout.addWidget(self.pause_btn)
+    
+    def source_changed(self):
+        pass
     
     def on_run(self):
         # кнопки

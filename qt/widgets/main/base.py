@@ -20,8 +20,8 @@ class MainWidget(QWidget):
         layout.addWidget(self.nav)
         layout.addLayout(self.view_stack, stretch=10)
 
-        self.market = ItemsTableWidget()
-        self.logs   = LogWidget()
+        self.market  = ItemsTableWidget()
+        self.logs    = LogWidget()
         self.proxies = QWidget()  # заглушка
 
         self.view_stack.addWidget(self.market)

@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QStatusBar
-from qt.widgets.labels import Connections
+from qt.widgets.labels import SessionTime
 
 class StatusBar(QStatusBar):
     def __init__(self):
@@ -10,5 +10,5 @@ class StatusBar(QStatusBar):
 
     def _set_widgets(self):
         # Connection status label
-        self.connection_label = Connections()
+        self.connection_label = SessionTime()
         self.addWidget(self.connection_label) 
