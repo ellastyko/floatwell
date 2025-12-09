@@ -1,5 +1,6 @@
 from PyQt5.QtCore import QObject, pyqtSignal
 from qt.widgets.main.tables import dispatcher
+from qt.notifier import safe_notify
 
 TIER_LIST = {
     "A": {"notifiable": True},
@@ -46,6 +47,9 @@ class ListingsRepository(QObject):
             })
         
         dispatcher.add_rows.emit(rows)
+
+        safe_notify('New listings added', f'{item['name']} | {len(rows)} items')
+        
 
     def get_new(self, items: list):
         new_items = []

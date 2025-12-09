@@ -95,8 +95,8 @@ class Listings:
                 
             data = response.json()
             
-            listinginfo = data.get("listinginfo", {})
-            assets = data.get("assets", {}).get("730", {}).get("2", {})
+            listinginfo = data.get("listinginfo", None)
+            assets = data.get("assets", {}).get("730", {}).get("2", None)
 
             if not assets or not listinginfo:
                 log_message = f"No assets or listinginfo"
