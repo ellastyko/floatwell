@@ -7,13 +7,13 @@ import humanize
 from datetime import datetime, timedelta
 from qt.repositories import listing_repository
 
-EXTERIORS = {
-    "FN": "Factory New",
-    "MW": "Minimal Wear",
-    "FT": "Field-Tested",
-    "WW": "Well-Worn",
-    "BS": "Battle-Scarred"
-}
+EXTERIORS = [
+    "Factory New",
+    "Minimal Wear",
+    "Field-Tested",
+    "Well-Worn",
+    "Battle-Scarred"
+]
 
 class ListingWorker(QObject):
     ITEMS_SOURCE = "./assets/configs/rare.json"
@@ -47,61 +47,71 @@ class ListingWorker(QObject):
         QTimer.singleShot(600_000, self._run_iteration)
 
     def parse_listings(self):
-        source_filters = self.source['filters']
+        self.source_filters = self.source['filters']
 
         # loader.set_max(len(self.source['data']) * len(EXTERIORS))
         # loader.set_value_signal(0)
 
-        for item_group_name in self.source['data'].keys():
-            for shortexterior, exterior in EXTERIORS.items():
-                hash_name, data = f"{item_group_name} ({exterior})", None
+        for item_name, item_config in self.source['data'].items():
+            result = []
 
-                while data is None:
-                    data = self.listings.get(hash_name, 'UAH', random.choice(self.proxies))
-                    
-                    if data is None:
-                        time.sleep(1) 
-                    else:
-                        break 
-                
-                # loader.set_value_signal(loader.get_value() + 1)
+            if item_config['has_exteriors']:
+                for exterior in EXTERIORS:
+                    result.extend(self.parse_single(item_name, exterior))
+            else:
+                result.extend(self.parse_single(item_name))
 
-                data_to_display = [] 
+            listing_repository.add_items.emit(result)
+            
+            time.sleep(12)
 
-                for item in data:
-                    min_price = min(item['converted_price'] for item in data if item.get('converted_price'))
+    def parse_single(self, item_name, exterior = None):
+        hash_name, data = f"{item_name} ({exterior})" if exterior else item_name, None
 
-                    # Извлекаем основную информацию
-                    pattern_info = self.analyzer.get_pattern_info(item_group_name, shortexterior, item['pattern'])
-                    float_info   = self.analyzer.get_float_info(item_group_name, shortexterior, item['float'])
-                    # Добавить инфу о брелках и тд
+        while data is None:
+            data = self.listings.get(hash_name, 'UAH', random.choice(self.proxies))
+            
+            if data is None:
+                time.sleep(1) 
+            else:
+                break 
+        
+        # loader.set_value_signal(loader.get_value() + 1)
 
-                    diff = price_difference(item['converted_price'], min_price)
+        result = [] 
 
-                    if 'pattern' in source_filters and (pattern_info['is_rear'] is False or pattern_info['price_tolerance'] < diff):
-                        continue
-                    # if 'float' in source_filters and not float_info['is_rear']:
-                    #     continue
-                    if 'keychains' in source_filters and not item['has_keychain']:
-                        continue
-                    if 'stickers' in source_filters and not item['has_sticker']:
-                        continue
-                    
-                    data_to_display.append({
-                        "name":         item['name'],
-                        "listing_id":   item['listing_id'],
-                        'assets':       item['assets'],
-                        'buy_url':      item['buy_url'],
-                        'inspect_link': item['inspect_link'],
-                        'pattern':      pattern_info,
-                        'float':        float_info,
-                        'currency_code':       item['currency']['code'],
-                        'diff':                diff,
-                        'converted_min_price': min_price, 
-                        'converted_price':     item['converted_price'], 
-                        'sync_at':             datetime.now().strftime("%H:%M:%S")
-                    })
-                
-                listing_repository.add_items.emit(data_to_display)
-                
-                time.sleep(12)
+        min_price = min(item.get('converted_price', float('inf')) for item in data)
+
+        for item in data:
+            # Извлекаем основную информацию
+            pattern_info = self.analyzer.get_pattern_info(item_name, item['pattern'], exterior)
+            float_info   = self.analyzer.get_float_info(item_name, item['float'], exterior)
+            # Добавить инфу о брелках и тд
+
+            diff = price_difference(item['converted_price'], min_price)
+
+            if 'pattern' in self.source_filters and (pattern_info['is_rear'] is False or pattern_info['price_tolerance'] < diff):
+                continue
+            # if 'float' in self.source_filters and not float_info['is_rear']:
+            #     continue
+            if 'keychains' in self.source_filters and not item['has_keychain']:
+                continue
+            if 'stickers' in self.source_filters and not item['has_sticker']:
+                continue
+            
+            result.append({
+                "name":         item['name'],
+                "listing_id":   item['listing_id'],
+                'assets':       item['assets'],
+                'buy_url':      item['buy_url'],
+                'inspect_link': item['inspect_link'],
+                'pattern':      pattern_info,
+                'float':        float_info,
+                'currency_code':       item['currency']['code'],
+                'diff':                diff,
+                'converted_min_price': min_price, 
+                'converted_price':     item['converted_price'], 
+                'sync_at':             datetime.now().strftime("%H:%M:%S")
+            })
+
+        return result

@@ -31,7 +31,7 @@ class Listings:
     def extract_pattern(self, asset_properties: list) -> int | None:
         """Достаёт int_value из propertyid = 1"""
         for p in asset_properties:
-            if p.get("propertyid") == 1 and "int_value" in p:
+            if (p.get("propertyid") == 1 or p.get("propertyid") == 3) and "int_value" in p:
                 return int(p["int_value"]) 
         return None
 
@@ -100,8 +100,9 @@ class Listings:
 
             if not assets or not listinginfo:
                 log_message = f"No assets or listinginfo"
+                log("No assets or listinginfo" + data.keys())
                 applog.log_message.emit(log_message, 'warning')
-                return
+                return 
             
             results = []
 
@@ -142,6 +143,14 @@ class Listings:
 
 # Класс отвечающий за анализ данных полученных из Listings
 class Analyzer:
+    EXTERIORS_FULL = {
+        "Factory New": "FN",
+        "Minimal Wear": "MW",
+        "Field-Tested": "FT",
+        "Well-Worn": "WW",
+        "Battle-Scarred": "BS"
+    }
+
     def __init__(self, config: dict):
         """
         config — словарь вида:
@@ -161,20 +170,35 @@ class Analyzer:
         """
         self.config = config
 
-    def get_pattern_info(self, item: str, exterior: str, pattern: int) -> bool:
+    def get_pattern_info(self, item: str, pattern: int, exterior: str | None) -> bool:
         rules = self.config[item]
 
         # --- Проверяем паттерн ---
         pattern_rules = rules.get("pattern", {})
 
         for rank, patternInfo in pattern_rules.items():
-            if pattern in patternInfo['patterns']:
-                price_tolerance = patternInfo["price_tolerance"][exterior]
-                return {"is_rear": True, "rank": rank, "price_tolerance": price_tolerance, "tier": patternInfo["tier"], "value": pattern}  # редкий по паттерну
+            pattern_values = patternInfo.get("pattern_values", [])
+            pattern_range  = patternInfo.get("range", [])
+
+            # Мэтч происходит либо по range либо по конкретным паттернам
+            pattern_match = (
+                pattern in pattern_values
+                or (
+                    isinstance(pattern_range, list) 
+                    and len(pattern_range) == 2 
+                    and pattern_range[0] <= pattern <= pattern_range[1]
+                )
+            )
+
+            if pattern_match:
+                price_tolerance = patternInfo["price_tolerance"][self.EXTERIORS_FULL[exterior]] if rules['has_exteriors'] else patternInfo["price_tolerance"]
+                # tier = patternInfo.get("range", [])
+
+                return {"is_rear": True, "rank": rank, "price_tolerance": price_tolerance, "value": pattern}  
 
         return {"is_rear": False, "value": pattern}
     
-    def get_float_info(self, item: str, exterior: str, float_value: float) -> bool:
+    def get_float_info(self, item: str, float_value: float, exterior: str | None) -> bool:
         rules = self.config[item]
 
         # --- Проверяем флоат ---
