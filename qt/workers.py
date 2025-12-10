@@ -78,14 +78,12 @@ class ListingWorker(QObject):
 
             if configuration['has_exteriors']:
                 for exterior in EXTERIORS:
-                    result.extend(self.parse_single(cname, exterior))
+                    listing_repository.add_items.emit(self.parse_single(cname, exterior))
+                    time.sleep(3)
             else:
-                result.extend(self.parse_single(cname))
-
-            listing_repository.add_items.emit(result)
+                listing_repository.add_items.emit(result.extend(self.parse_single(cname)))
+                time.sleep(3)
             
-            time.sleep(12)
-
     def parse_single(self, item_name, exterior = None):
         hash_name, data = f"{item_name} ({exterior})" if exterior else item_name, None
 
@@ -105,17 +103,20 @@ class ListingWorker(QObject):
             # Извлекаем основную информацию
             pattern_info = self.analyzer.get_pattern_info(item['pattern'], exterior)
             float_info   = self.analyzer.get_float_info(item['float'], exterior)
-            # Добавить инфу о брелках и тд
+            diff         = price_difference(item['converted_price'], min_price)
 
-            diff = price_difference(item['converted_price'], min_price)
+            score = 0
 
-            if 'pattern' in self.source_filters and (pattern_info['is_rear'] is False or pattern_info['price_tolerance'] < diff):
-                continue
-            # if 'float' in self.source_filters and not float_info['is_rear']:
-            #     continue
-            if 'keychains' in self.source_filters and not item['has_keychain']:
-                continue
-            if 'stickers' in self.source_filters and not item['has_sticker']:
+            if 'pattern' in self.source_filters and pattern_info['is_rear'] and pattern_info['price_tolerance'] > diff:
+                score += 1
+            if 'float' in self.source_filters and float_info['is_rear']:
+                score += 1
+            if 'keychains' in self.source_filters and item['has_keychain']:
+                score += 1
+            if 'stickers' in self.source_filters and item['has_sticker']:
+                score += 1
+            
+            if score < 1:
                 continue
             
             result.append({

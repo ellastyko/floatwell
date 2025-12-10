@@ -46,6 +46,13 @@ class ListingsParser:
         raw_inspect_link = listing['asset']['market_actions'][0]['link']
         
         return raw_inspect_link.replace("%listingid%", listing['listingid']).replace("%assetid%", listing['asset']['id'])
+    
+    def is_valid_listing(self, listing: dict):
+        return (
+            listing.get('price', 0) > 0 and
+            listing.get('asset', {}).get('amount', '0') != '0' and
+            'steam_fee' in listing  # Есть комиссии
+        )
 
     def get_assets(self, descriptions: List[Dict[str, Any]]):
         """Возвращает список стикеров/чармов, прикреплённых к предмету."""
@@ -76,12 +83,12 @@ class ListingsParser:
 
         return items
 
-    def get(self, hash_name: str, currency_code = 'USD', proxy: Optional[dict] = None):
+    def get(self, hash_name: str, currency_code: str, proxy: Optional[dict] = None):
+        currency = self.get_currency(currency_code)
+
+        url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1"
+        
         try:
-            currency = self.get_currency(currency_code)
-
-            url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1"
-
             response = send_request(url, proxy)
 
             if response.status_code != 200:
@@ -89,32 +96,34 @@ class ListingsParser:
                 applog.log_message.emit(log_message, 'warning')
                 return
 
-
             log_message = f"Successful HTTP request via proxy {proxy['ip']}:{proxy['port']} ({response.status_code})"
             applog.log_message.emit(log_message, 'success')
                 
             data = response.json()
-            
+            # data = load_json_resource('./storage/snapshots/endpoint.json')
+        
             listinginfo = data.get("listinginfo", None)
             assets = data.get("assets", {}).get("730", {}).get("2", None)
 
             if not assets or not listinginfo:
                 log_message = f"No assets or listinginfo"
-                log("No assets or listinginfo" + data.keys())
-                applog.log_message.emit(log_message, 'warning')
+                log("No assets or listinginfo")
+                applog.log_message.emit(log_message, 'error')
                 return 
             
             results = []
 
             for listing_id, listing in listinginfo.items():
-                if int(listing['asset']['amount']) == 0:
+                if not self.is_valid_listing(listing):
                     continue
 
                 asset_id = listing['asset']['id']
 
                 asset = assets[asset_id]
                 props = asset.get("asset_properties", [])
+
                 if not props:
+                    log('No asset properties')
                     continue
 
                 pattern      = self.extract_pattern(props)
@@ -191,7 +200,7 @@ class ListingAnalyzer:
         float_rules = self.config.get("float", {})
 
         if exterior and exterior in float_rules:
-            frange = float_rules[exterior]
+            frange = float_rules[self.EXTERIORS_FULL[exterior]]
             if frange["min"] <= float_value <= frange["max"]:
                 return {"is_rear": True, "value": float_value}
 

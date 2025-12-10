@@ -2,14 +2,6 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from qt.widgets.main.tables import dispatcher
 from qt.notifier import safe_notify
 
-TIER_LIST = {
-    "A": {"notifiable": True},
-    "B": {"notifiable": True},
-    "C": {"notifiable": False},
-    "D": {"notifiable": False},
-    "E": {"notifiable": False},
-}
-
 class ListingsRepository(QObject):
     add_items = pyqtSignal(list)
 
