@@ -7,16 +7,17 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('assets/proxies.json', 'assets'),
-        ('assets/currencies.json', 'assets'),
-        ('assets/app.json', 'assets'),
+        ('resources/proxies.json', 'resources'),
+        ('resources/currencies.json', 'resources'),
+        ('configs/settings.json', 'configs'),
         
         ('assets/images/logo.jpg', 'assets/images'),
 
-        ('assets/configs/rare.json', 'assets/configs'),
-        ('assets/configs/attachments.json', 'assets/configs'),
+        ('sources/rare.json', 'sources'),
+        ('sources/attachments.json', 'sources'),
 
         ('storage/logs/', 'storage/logs'),
+        ('storage/snapshots/', 'storage/snapshots'),
         ('config.toml', '.'),  
     ],
     hiddenimports=["PyQt5.QtCore", "PyQt5.QtGui", "PyQt5.QtWidgets"],

@@ -1,11 +1,14 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 import time, random
-from parsers.listings import Listings, Analyzer
+from core.listings import ListingsParser, ListingAnalyzer
 from utils.helpers import load_json_resource
 from utils.market import price_difference
-import humanize
-from datetime import datetime, timedelta
+from datetime import datetime
 from qt.repositories import listing_repository
+from configurator import config
+from core.source import source_manager
+from PyQt5.QtWidgets import QApplication
+from core.settings import settings_manager
 
 EXTERIORS = [
     "Factory New",
@@ -16,50 +19,68 @@ EXTERIORS = [
 ]
 
 class ListingWorker(QObject):
-    ITEMS_SOURCE = "./assets/configs/rare.json"
-    PROXIES      = "./assets/proxies.json"
-
-    finished    = pyqtSignal()       # если нужно корректно завершить поток
+    finished     = pyqtSignal()       # если нужно корректно завершить поток
 
     def __init__(self):
         super().__init__()
         self._running = False
-        self.source  = load_json_resource(self.ITEMS_SOURCE)
-        self.proxies = load_json_resource(self.PROXIES)
-
-        self.listings = Listings()
-        self.analyzer = Analyzer(self.source['data'])
+        self.proxies  = load_json_resource(config['resources']['proxies'])
 
     def stop(self):
         self._running = False
     
     def run(self):
         self._running = True
+        self._setup()
         self._run_iteration()
+    
+    def _setup(self):
+        self.currency = settings_manager.get('currency')
+        self.listings = ListingsParser()
+        self.analyzer = ListingAnalyzer()
+        
+        # Создаем флаг ожидания
+        self.source_loaded = False
+        
+        def on_source_loaded(success, filename):
+            self.source_loaded = True
+            if not success:
+                print(f"Ошибка загрузки {filename}")
+        
+        # Временно подключаемся к сигналу
+        source_manager.source_loaded.connect(on_source_loaded)
+        source_manager.source_changed.emit('rare.json')
+        
+        # Ждем завершения (осторожно: может зависнуть!)
+        while not self.source_loaded:
+            QApplication.processEvents()  # Обрабатываем события Qt
+        
+        source_manager.source_loaded.disconnect(on_source_loaded)
+        
+        # Теперь данные точно загружены
+        self.source_filters = source_manager.get_filters()
+        self.source_configurations = source_manager.get_configurations()
 
     def _run_iteration(self):
         if not self._running:
             self.finished.emit()
             return
-        
+
         self.parse_listings()  
         # через 600 секунд запустить следующую итерацию
-        QTimer.singleShot(600_000, self._run_iteration)
+        QTimer.singleShot(60_000, self._run_iteration)
 
     def parse_listings(self):
-        self.source_filters = self.source['filters']
+        for cname, configuration in self.source_configurations.items():
+            self.analyzer.set_configuration(configuration)
 
-        # loader.set_max(len(self.source['data']) * len(EXTERIORS))
-        # loader.set_value_signal(0)
-
-        for item_name, item_config in self.source['data'].items():
             result = []
 
-            if item_config['has_exteriors']:
+            if configuration['has_exteriors']:
                 for exterior in EXTERIORS:
-                    result.extend(self.parse_single(item_name, exterior))
+                    result.extend(self.parse_single(cname, exterior))
             else:
-                result.extend(self.parse_single(item_name))
+                result.extend(self.parse_single(cname))
 
             listing_repository.add_items.emit(result)
             
@@ -69,23 +90,21 @@ class ListingWorker(QObject):
         hash_name, data = f"{item_name} ({exterior})" if exterior else item_name, None
 
         while data is None:
-            data = self.listings.get(hash_name, 'UAH', random.choice(self.proxies))
+            data = self.listings.get(hash_name, self.currency, random.choice(self.proxies))
             
             if data is None:
                 time.sleep(1) 
             else:
                 break 
         
-        # loader.set_value_signal(loader.get_value() + 1)
-
         result = [] 
 
         min_price = min(item.get('converted_price', float('inf')) for item in data)
 
         for item in data:
             # Извлекаем основную информацию
-            pattern_info = self.analyzer.get_pattern_info(item_name, item['pattern'], exterior)
-            float_info   = self.analyzer.get_float_info(item_name, item['float'], exterior)
+            pattern_info = self.analyzer.get_pattern_info(item['pattern'], exterior)
+            float_info   = self.analyzer.get_float_info(item['float'], exterior)
             # Добавить инфу о брелках и тд
 
             diff = price_difference(item['converted_price'], min_price)

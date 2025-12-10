@@ -9,5 +9,10 @@ height=720
 minw=640
 minh=360
 
-[synchronisations]
-currency="UAH"
+[configs]
+settings="./configs/settings.json"
+
+[resources]
+currencies="./resources/currencies.json"
+proxies="./resources/proxies.json"
+

@@ -1,22 +1,22 @@
 from urllib.parse import quote
 import time
 from utils.requests import send_request
-from utils.logs import log, save_response
+from utils.logs import log
 from utils.helpers import load_json_resource
 from typing import Optional
 from qt.signals import applog
 import re, json
 from typing import List, Dict, Any
+from configurator import config
 
 # --- Настройка ---
-class Listings:
-    CURRENCIES_PATH = './assets/currencies.json'
-    BASE_URL        = 'https://steamcommunity.com/market/listings/730'
+class ListingsParser:
+    BASE_URL = 'https://steamcommunity.com/market/listings/730'
 
     def __init__(self, error_timeout = 1):
         self.error_timeout = error_timeout
 
-        self.currencies = load_json_resource(self.CURRENCIES_PATH)
+        self.currencies = load_json_resource(config['resources']['currencies'])
     
     def get_currency(self, code: str) -> dict | None:
         """Возвращает запись валюты по коду, например 'USD'."""
@@ -145,7 +145,7 @@ class Listings:
             log(f"Error: {e}")
 
 # Класс отвечающий за анализ данных полученных из Listings
-class Analyzer:
+class ListingAnalyzer:
     EXTERIORS_FULL = {
         "Factory New": "FN",
         "Minimal Wear": "MW",
@@ -154,30 +154,15 @@ class Analyzer:
         "Battle-Scarred": "BS"
     }
 
-    def __init__(self, config: dict):
-        """
-        config — словарь вида:
-        {
-            "Five-SeveN | Heat Treated": {
-                "pattern": {
-                    "rank0": [...],
-                    "rank1": [...],
-                },
-                "float": {
-                    "FN": {"min": 0.0, "max": 0.07},
-                    "FT": {"min": 0.07, "max": 0.15},
-                }
-            },
-            ...
-        }
-        """
+    def __init__(self,):
+        pass
+
+    def set_configuration(self, config: dict):
         self.config = config
 
-    def get_pattern_info(self, item: str, pattern: int, exterior: str | None) -> bool:
-        rules = self.config[item]
-
+    def get_pattern_info(self, pattern: int, exterior: str | None) -> bool:
         # --- Проверяем паттерн ---
-        pattern_rules = rules.get("pattern", {})
+        pattern_rules = self.config.get("pattern", {})
 
         for rank, patternInfo in pattern_rules.items():
             pattern_values = patternInfo.get("pattern_values", [])
@@ -194,18 +179,17 @@ class Analyzer:
             )
 
             if pattern_match:
-                price_tolerance = patternInfo["price_tolerance"][self.EXTERIORS_FULL[exterior]] if rules['has_exteriors'] else patternInfo["price_tolerance"]
+                price_tolerance = patternInfo["price_tolerance"][self.EXTERIORS_FULL[exterior]] if self.config['has_exteriors'] else patternInfo["price_tolerance"]
                 # tier = patternInfo.get("range", [])
 
                 return {"is_rear": True, "rank": rank, "price_tolerance": price_tolerance, "value": pattern}  
 
         return {"is_rear": False, "value": pattern}
     
-    def get_float_info(self, item: str, float_value: float, exterior: str | None) -> bool:
-        rules = self.config[item]
-
+    def get_float_info(self, float_value: float, exterior: str | None) -> bool:
         # --- Проверяем флоат ---
-        float_rules = rules.get("float", {})
+        float_rules = self.config.get("float", {})
+
         if exterior and exterior in float_rules:
             frange = float_rules[exterior]
             if frange["min"] <= float_value <= frange["max"]:
