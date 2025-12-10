@@ -1,11 +1,11 @@
 from urllib.parse import quote
 import time
 from utils.requests import send_request
-from utils.logs import log
+from utils.logs import log, save_response
 from utils.helpers import load_json_resource
 from typing import Optional
 from qt.signals import applog
-import re
+import re, json
 from typing import List, Dict, Any
 
 # --- Настройка ---
@@ -85,12 +85,12 @@ class Listings:
             response = send_request(url, proxy)
 
             if response.status_code != 200:
-                if response.status_code == 429:
-                    log_message = (f"HTTP Request error ({response.status_code}) via proxy {proxy['ip']}:{proxy['port']}" )
-                    applog.log_message.emit(log_message, 'warning')
-                    return 
+                log_message = (f"HTTP Request error ({response.status_code}) via proxy {proxy['ip']}:{proxy['port']}" )
+                applog.log_message.emit(log_message, 'warning')
+                return
 
-            log_message = f"Successful HTTP request via proxy {proxy['ip']}:{proxy['port']}"
+
+            log_message = f"Successful HTTP request via proxy {proxy['ip']}:{proxy['port']} ({response.status_code})"
             applog.log_message.emit(log_message, 'success')
                 
             data = response.json()
@@ -107,6 +107,9 @@ class Listings:
             results = []
 
             for listing_id, listing in listinginfo.items():
+                if int(listing['asset']['amount']) == 0:
+                    continue
+
                 asset_id = listing['asset']['id']
 
                 asset = assets[asset_id]
