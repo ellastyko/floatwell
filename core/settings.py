@@ -32,7 +32,6 @@ class SettingsManager(QObject):
             
             self._settings = data
             self.settings_loaded.emit(True)
-            print(f"Настройки загружены из {self._settings_path}")
             return True
             
         except Exception as e:

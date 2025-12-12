@@ -72,9 +72,10 @@ class ListingWorker(QObject):
 
     def parse_listings(self):
         for cname, configuration in self.source_configurations.items():
+            if configuration.get('is_active') is False:
+                continue
+            
             self.analyzer.set_configuration(configuration)
-
-            result = []
 
             if configuration['has_exteriors']:
                 for exterior in EXTERIORS:
