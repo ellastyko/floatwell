@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QObject, pyqtSignal
 from qt.widgets.main.tables import dispatcher
-from qt.notifier import safe_notify
+from qt.notifier import long_notify
 
 class ListingsRepository(QObject):
     add_items = pyqtSignal(list)
@@ -12,7 +12,7 @@ class ListingsRepository(QObject):
         self.add_items.connect(self.on_items_added)
 
     def on_items_added(self, items: list):
-        items = self.get_new(items)
+        items = self.filter_new(items)
 
         if len(items) < 1:
             return
@@ -40,10 +40,9 @@ class ListingsRepository(QObject):
         
         dispatcher.add_rows.emit(rows)
 
-        safe_notify('New listings added', f'{item['name']} | {len(rows)} items')
-        
+        long_notify(f"{item['name']}", f"Listings added ({len(rows)})")
 
-    def get_new(self, items: list):
+    def filter_new(self, items: list):
         new_items = []
         for item in items:
             listing_id = item["listing_id"]

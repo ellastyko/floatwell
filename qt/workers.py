@@ -81,7 +81,7 @@ class ListingWorker(QObject):
                     listing_repository.add_items.emit(self.parse_single(cname, exterior))
                     time.sleep(3)
             else:
-                listing_repository.add_items.emit(result.extend(self.parse_single(cname)))
+                listing_repository.add_items.emit(self.parse_single(cname))
                 time.sleep(3)
             
     def parse_single(self, item_name, exterior = None):
