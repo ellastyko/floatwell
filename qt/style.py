@@ -169,6 +169,12 @@ class StyleManager:
             QTableWidget::item {
                 padding: 4px;
             }
+
+            /* стилизуем верхний левый угол */
+            QTableCornerButton::section {
+                background-color: #333;
+                border: 1px solid #444;
+            }
         """
     }
     

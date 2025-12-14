@@ -1,4 +1,5 @@
 from utils.helpers import load_json_resource
+from qt.signals import applog
 
 class SourceManager:
     def __init__(self):
@@ -16,7 +17,9 @@ class SourceManager:
             self.source = load_json_resource(path)
             
             if self.source is None:
-                raise ValueError(f"Не удалось загрузить файл '{path}'")
+                message = f"Не удалось загрузить файл '{path}'"
+                applog.log_message.emit(message, 'error')
+                raise ValueError(message)
             
             # Базовая проверка структуры
             self._validate_source()

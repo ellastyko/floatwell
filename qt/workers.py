@@ -1,5 +1,4 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
-import random
 from datetime import datetime
 
 from core.listings import ListingsParser, ListingAnalyzer
@@ -7,6 +6,7 @@ from utils.helpers import load_json_resource
 from utils.market import price_difference
 from configurator import config
 from qt.repositories import ListingsRepository
+from core.proxy import proxy_service
 from core.source import source_manager
 from core.settings import settings_manager
 from utils.logs import log
@@ -24,17 +24,14 @@ EXTERIORS = [
 class ListingWorker(QObject):
     finished = pyqtSignal()
 
-    REQUEST_DELAY_MS = 3000
-    RETRY_DELAY_MS   = 1000
-    ITERATION_DELAY  = 60_000
+    REQUEST_DELAY_MS = 500
+    RETRY_DELAY_MS   = 500
+    ITERATION_DELAY  = 10_000
 
     def __init__(self):
         super().__init__()
         self._running = False
         self._tasks   = []
-        self._timer   = QTimer()
-        self._timer.setSingleShot(True)
-        self._timer.timeout.connect(self._process_next_task)
 
         self.proxies = load_json_resource(config['resources']['proxies'])
 
@@ -43,6 +40,11 @@ class ListingWorker(QObject):
     def run(self):
         try:
             self._running = True
+
+            self._timer = QTimer()
+            self._timer.setSingleShot(True)
+            self._timer.timeout.connect(self._process_next_task)
+
             self._setup()
             self._build_tasks()
             self._process_next_task()
@@ -53,14 +55,11 @@ class ListingWorker(QObject):
     def stop(self):
         self._running = False
         self._tasks.clear()
-        self._timer.stop()
         self.finished.emit()
 
     # -------------------- setup --------------------
 
     def _setup(self):
-        print('_setup')
-
         self.currency   = settings_manager.get('currency')
         self.repository = ListingsRepository()
         self.listings   = ListingsParser()
@@ -75,8 +74,6 @@ class ListingWorker(QObject):
     # -------------------- task queue --------------------
 
     def _build_tasks(self):
-        print('_build_tasks')
-
         self._tasks.clear()
 
         for cname, config in self.source_configurations.items():
@@ -90,8 +87,6 @@ class ListingWorker(QObject):
                 self._tasks.append((cname, config, None))
 
     def _process_next_task(self):
-        print('_process_next_task')
-
         if not self._running:
             return self.finished.emit()
 
@@ -115,15 +110,19 @@ class ListingWorker(QObject):
     # -------------------- parsing --------------------
 
     def _parse_single(self, item_name, exterior):
-        print('_parse_single')
         if not self._running:
             return
 
         hash_name = f"{item_name} ({exterior})" if exterior else item_name
-        proxy     = random.choice(self.proxies)
 
-        data = self.listings.get(hash_name, self.currency, proxy)
-        print(data)
+        proxy_ctx = proxy_service.acquire()
+        if proxy_ctx is None:
+            applog.log_message.emit('❌ Нет свободных прокси', 'warning')
+            self._timer.start(self.RETRY_DELAY_MS)
+            return
+
+        with proxy_ctx as proxy:
+            data = self.listings.get(hash_name, self.currency, proxy)
 
         if data is None:
             # retry без блокировки
@@ -142,7 +141,6 @@ class ListingWorker(QObject):
         result = []
 
         min_price = min(i.get('converted_price', float('inf')) for i in data)
-        min_float = min(i.get('float', float('inf')) for i in data)
 
         for item in data:
             pattern_info = self.analyzer.get_pattern_info(item['pattern'], exterior)
@@ -179,7 +177,7 @@ class ListingWorker(QObject):
             })
 
         applog.log_message.emit(
-            f"{data[0]['name']}; Parsed {len(data)} items, {len(result)} featured | Lowest float: {min_float}",
+            f"{data[0]['name']}; Parsed {len(data)} items, {len(result)} featured",
             "info"
         )
 
