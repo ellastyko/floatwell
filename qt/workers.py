@@ -4,11 +4,13 @@ from core.listings import ListingsParser, ListingAnalyzer
 from utils.helpers import load_json_resource
 from utils.market import price_difference
 from datetime import datetime
-from qt.repositories import listing_repository
 from configurator import config
+from qt.repositories import ListingsRepository
 from core.source import source_manager
 from PyQt5.QtWidgets import QApplication
 from core.settings import settings_manager
+from utils.logs import log
+from qt.signals import applog
 
 EXTERIORS = [
     "Factory New",
@@ -19,7 +21,7 @@ EXTERIORS = [
 ]
 
 class ListingWorker(QObject):
-    finished     = pyqtSignal()       # если нужно корректно завершить поток
+    finished = pyqtSignal()       # если нужно корректно завершить поток
 
     def __init__(self):
         super().__init__()
@@ -28,37 +30,28 @@ class ListingWorker(QObject):
 
     def stop(self):
         self._running = False
+        self.finished.emit()
     
     def run(self):
-        self._running = True
-        self._setup()
-        self._run_iteration()
+        try:
+            self._running = True
+            self._setup()
+            self._run_iteration()
+        except Exception as e:
+            log(e)
+            self.stop()
     
     def _setup(self):
-        self.currency = settings_manager.get('currency')
-        self.listings = ListingsParser()
-        self.analyzer = ListingAnalyzer()
+        self.currency   = settings_manager.get('currency')
+        self.repository = ListingsRepository()
+        self.listings   = ListingsParser()
+        self.analyzer   = ListingAnalyzer()
         
-        # Создаем флаг ожидания
-        self.source_loaded = False
-        
-        def on_source_loaded(success, filename):
-            self.source_loaded = True
-            if not success:
-                print(f"Ошибка загрузки {filename}")
-        
-        # Временно подключаемся к сигналу
-        source_manager.source_loaded.connect(on_source_loaded)
-        source_manager.source_changed.emit('rare.json')
-        
-        # Ждем завершения (осторожно: может зависнуть!)
-        while not self.source_loaded:
-            QApplication.processEvents()  # Обрабатываем события Qt
-        
-        source_manager.source_loaded.disconnect(on_source_loaded)
+        if not source_manager.is_source_valid():
+            raise Exception('Invalid source')
         
         # Теперь данные точно загружены
-        self.source_filters = source_manager.get_filters()
+        self.source_filters        = source_manager.get_filters()
         self.source_configurations = source_manager.get_configurations()
 
     def _run_iteration(self):
@@ -79,10 +72,10 @@ class ListingWorker(QObject):
 
             if configuration['has_exteriors']:
                 for exterior in EXTERIORS:
-                    listing_repository.add_items.emit(self.parse_single(cname, exterior))
+                    self.repository.add_items.emit(self.parse_single(cname, exterior))
                     time.sleep(3)
             else:
-                listing_repository.add_items.emit(self.parse_single(cname))
+                self.repository.add_items.emit(self.parse_single(cname))
                 time.sleep(3)
             
     def parse_single(self, item_name, exterior = None):
@@ -99,6 +92,7 @@ class ListingWorker(QObject):
         result = [] 
 
         min_price = min(item.get('converted_price', float('inf')) for item in data)
+        min_float = min(item.get('float', float('inf')) for item in data)
 
         for item in data:
             # Извлекаем основную информацию
@@ -128,11 +122,14 @@ class ListingWorker(QObject):
                 'inspect_link': item['inspect_link'],
                 'pattern':      pattern_info,
                 'float':        float_info,
-                'currency_code':       item['currency']['code'],
+                'currency':     self.currency,
                 'diff':                diff,
                 'converted_min_price': min_price, 
                 'converted_price':     item['converted_price'], 
                 'sync_at':             datetime.now().strftime("%H:%M:%S")
             })
+
+        log_message = f"{item['name']}; Parsed {len(data)} items, {len(result)} are featured | Lowest float: {min_float}"
+        applog.log_message.emit(log_message, 'info')
 
         return result

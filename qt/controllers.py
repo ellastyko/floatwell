@@ -13,14 +13,18 @@ class ParserController(QObject):
 
         # когда поток стартует → запускаем метод parsera
         self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.on_worker_finished)
 
     def start(self):
+        print('controller start')
         self.thread.start()
     
     def stop(self):
+        print('controller stop')
         self.worker.stop()  # сигнал воркеру завершиться
 
     def on_worker_finished(self):
+        print('on_worker_finished')
         self.thread.quit()
         self.thread.wait()
         self.stopped.emit()

@@ -1,7 +1,6 @@
 from utils.helpers import load_json_resource, save_json_resource
 from PyQt5.QtCore import QObject, pyqtSignal
 from configurator import config
-import json
 from typing import Any, Optional
 
 class SettingsManager(QObject):

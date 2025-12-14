@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QObject, pyqtSignal
 from qt.widgets.main.tables import dispatcher
-from qt.notifier import long_notify
+from qt.notifier import short_notify
 
 class ListingsRepository(QObject):
     add_items = pyqtSignal(list)
@@ -19,6 +19,7 @@ class ListingsRepository(QObject):
 
         rows = []
         for item in items:
+            csymbol = item['currency']['symbol']
             price_diff = f"{item['diff'] * 100:.1f}"
 
             if item['pattern']['is_rear']:
@@ -32,7 +33,7 @@ class ListingsRepository(QObject):
                 'assets_col': ", ".join(item["name"] for item in item['assets']),
                 'float_col': item['float']['value'],
                 'pattern_col': pattern_col,
-                'converted_price_col': f"{item['converted_min_price']} {item['currency_code']} -> {item['converted_price']} {item['currency_code']} ({price_diff}%)",
+                'converted_price_col': f"{item['converted_min_price']} {csymbol} -> {item['converted_price']} {csymbol} ({price_diff}%)",
                 'inspect_link_col': item['inspect_link'],
                 'buy_url_col': item['buy_url'],
                 'sync_at_col': item['sync_at'],
@@ -40,7 +41,7 @@ class ListingsRepository(QObject):
         
         dispatcher.add_rows.emit(rows)
 
-        long_notify(f"{item['name']}", f"Listings added ({len(rows)})")
+        short_notify(f"{item['name']}", f"Listings added ({len(rows)})")
 
     def filter_new(self, items: list):
         new_items = []
@@ -52,5 +53,3 @@ class ListingsRepository(QObject):
                 self.items[listing_id] = item
                 new_items.append(item)  # новые элементы
         return new_items  # возвращаем только новые, чтобы уведомить пользователя
-
-listing_repository = ListingsRepository()

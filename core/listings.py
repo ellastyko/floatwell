@@ -7,7 +7,6 @@ from typing import Optional
 from qt.signals import applog
 import re, json
 from typing import List, Dict, Any
-from configurator import config
 
 # --- Настройка ---
 class ListingsParser:
@@ -15,18 +14,6 @@ class ListingsParser:
 
     def __init__(self, error_timeout = 1):
         self.error_timeout = error_timeout
-
-        self.currencies = load_json_resource(config['resources']['currencies'])
-    
-    def get_currency(self, code: str) -> dict | None:
-        """Возвращает запись валюты по коду, например 'USD'."""
-        code = code.upper()
-
-        for c in self.currencies:
-            if c.get("code") == code:
-                return c
-
-        return None
 
     def extract_pattern(self, asset_properties: list) -> int | None:
         """Достаёт int_value из propertyid = 1"""
@@ -83,9 +70,7 @@ class ListingsParser:
 
         return items
 
-    def get(self, hash_name: str, currency_code: str, proxy: Optional[dict] = None):
-        currency = self.get_currency(currency_code)
-
+    def get(self, hash_name: str, currency: dict, proxy: Optional[dict] = None):
         url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1"
         
         try:
@@ -132,8 +117,8 @@ class ListingsParser:
                 assets_list  = self.get_assets(asset['descriptions'])
 
                 # Logging
-                log_message = f"{asset['market_hash_name']}; Listing: {listing_id}; Pattern: {pattern}; Float: {float}"
-                applog.log_message.emit(log_message, 'info')
+                # log_message = f"{asset['market_hash_name']}; Listing: {listing_id}; Pattern: {pattern}; Float: {float}"
+                # applog.log_message.emit(log_message, 'info')
 
                 results.append({
                     "name": asset['market_hash_name'],
@@ -142,13 +127,13 @@ class ListingsParser:
                     "float": float,
                     "price": (int(listing['price']) + int(listing['fee'])) / 100,
                     "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
-                    "currency": currency,
                     'assets': assets_list,
                     'has_keychain': any(item["type"] == "keychain" for item in assets_list),
                     'has_stickers': any(item["type"] == "sticker" for item in assets_list),
                     'buy_url': f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
                     'inspect_link': inspect_link
                 })
+
             return results
         except Exception as e:
             log(f"Error: {e}")

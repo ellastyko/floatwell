@@ -1,8 +1,14 @@
 {
-    "currency": "UAH",
-    "synchronisations": {
-        "request_interval": 12,
-        "cycle_interval": 120,
-        "error_interval": 1200
-    }
+  "currency": {
+    "code": "KZT",
+    "id": 35,
+    "name": "Kazakhstani Tenge",
+    "symbol": "₸"
+  },
+  "source": "attachments.json",
+  "synchronisations": {
+    "request_interval": 12,
+    "cycle_interval": 120,
+    "error_interval": 1200
+  }
 }

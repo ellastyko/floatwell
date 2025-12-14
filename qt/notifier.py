@@ -1,8 +1,6 @@
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, Qt, QTimer
-import threading
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, Qt
 from windows_toasts import Toast, WindowsToaster, ToastDisplayImage, ToastDuration
 from configurator import config
-from PyQt5.QtWidgets import QApplication
 from utils.helpers import resource_path
 from utils.window import focus
 

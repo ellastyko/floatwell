@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QButtonGroup)
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QButtonGroup
 from qt.signals import ui
 from qt.widgets.components.buttons import PushButton
 
@@ -13,7 +13,6 @@ class NavWidget(QWidget):
         self.setLayout(layout)
 
         # Основные кнопки режимов
-
         buttons = [
             ("Listings", lambda: ui.mode.emit('listings')),
             ("Logs", lambda: ui.mode.emit('logs')),

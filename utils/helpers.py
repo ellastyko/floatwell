@@ -1,5 +1,6 @@
 import json 
 import os, sys
+from pathlib import Path
 
 def save_json_resource(path: str, data: dict) -> bool:
     """
@@ -64,3 +65,10 @@ def resource_path(relative_path):
     except AttributeError:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
+def files_dict(directory: str) -> dict[str, str]:
+    return {
+        p.name: str(p.resolve())
+        for p in Path(directory).iterdir()
+        if p.is_file()
+    }

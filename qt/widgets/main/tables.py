@@ -1,7 +1,4 @@
-from PyQt5.QtWidgets import (
-    QWidget, QTableWidget, QHeaderView, QGroupBox,
-    QVBoxLayout, QTableWidgetItem, QPushButton
-)
+from PyQt5.QtWidgets import (QWidget, QTableWidget, QHeaderView, QGroupBox, QVBoxLayout, QTableWidgetItem, QPushButton)
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 import webbrowser
 from qt.style import StyleManager

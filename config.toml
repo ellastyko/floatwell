@@ -16,3 +16,6 @@ settings="./configs/settings.json"
 currencies="./resources/currencies.json"
 proxies="./resources/proxies.json"
 
+[sources]
+dir="./sources"
+

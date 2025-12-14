@@ -6,6 +6,11 @@ from qt.widgets.components.inputs import create_labeled_combobox
 from qt.widgets.components.buttons import PushButton
 from qt.controllers import parser
 from qt.widgets.components.bars import LoadingBar
+from utils.helpers import files_dict
+from configurator import config
+from core.source import source_manager
+from core.settings import settings_manager
+from utils.helpers import resource_path, load_json_resource
 
 class ProxiesPanel(QGroupBox):
     def __init__(self):
@@ -37,78 +42,109 @@ class ProxiesPanel(QGroupBox):
 class ControlPanel(QGroupBox):
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
 
         self.setStyleSheet("""
             border-radius: 5px;
             background-color: #303030;
             color: white;
         """)
-
-        container, combo = create_labeled_combobox("Source:")
         
-        combo.addItems(['1x1', '2x2', '3x3'])
-        combo.currentTextChanged.connect(self.source_changed)
+        currency_select = self.setup_currency_select()
+        source_select = self.setup_source_select()
 
-        # Создаем заголовок
-        self.loader = LoadingBar()
+        self.layout.addWidget(currency_select)
+        self.layout.addWidget(source_select)
+        self.layout.addStretch(8)
 
-        self.run_parsing_btn = PushButton("Run parsing")
-        # self.restart_btn = PushButton("Restart")
+        self.setup_buttons()
+
+    
+    def setup_buttons(self):
+        self.run_btn = PushButton("Run parsing")
         self.pause_btn = PushButton("Pause")
-        self.run_parsing_btn.clicked.connect(self.on_run)
-        # self.restart_btn.clicked.connect(self.on_restart)
-        self.pause_btn.clicked.connect(self.on_pause)
 
-        layout.addWidget(container)
-        layout.addStretch(8)
-        layout.addWidget(self.loader)
-        layout.addWidget(self.run_parsing_btn)
-        # layout.addWidget(self.restart_btn)
-        layout.addWidget(self.pause_btn)
+        self.run_btn.clicked.connect(self.on_run)
+        self.pause_btn.clicked.connect(self.on_pause)
+        parser.stopped.connect(self.on_worker_finished)
+
+        self.layout.addWidget(self.run_btn)
+        self.layout.addWidget(self.pause_btn)
     
-    def source_changed(self):
-        pass
+    # Currency
+    def setup_currency_select(self):
+        container, combo = create_labeled_combobox("Currency:")
+
+        currencies = load_json_resource(config['resources']['currencies'])
+
+        saved_currency = settings_manager.get('currency') # сохраненный source name
+
+        for currency in currencies:
+            combo.addItem(currency['name'], currency)
+        
+        # Если есть сохранённый source — выставляем его
+        if saved_currency:
+            index = combo.findText(saved_currency['name'])
+            if index != -1:
+                combo.setCurrentIndex(index)
+
+        combo.currentIndexChanged.connect(self.currency_changed)
+
+        return container
+
+    def currency_changed(self, index):
+        combo = self.sender()
+        data = combo.itemData(index)   
+
+        # Обновляем сохранённый выбор
+        settings_manager.set('currency', data)
     
+    # Source
+    def setup_source_select(self):
+        container, combo = create_labeled_combobox("Source:")
+
+        sources = files_dict(resource_path(config['sources']['dir']))
+
+        saved_source = settings_manager.get('source') # сохраненный source name
+
+        for name, path in sources.items():
+            combo.addItem(name, path)
+        
+        # Если есть сохранённый source — выставляем его
+        if saved_source:
+            index = combo.findText(saved_source)
+            if index != -1:
+                combo.setCurrentIndex(index)
+                source_manager.set_source(name, path)
+
+        combo.currentIndexChanged.connect(self.source_changed)
+
+        return container
+    
+    def source_changed(self, index):
+        combo = self.sender()
+        name = combo.currentText()     # имя берём из текста
+        path = combo.itemData(index)   # путь берём из itemData
+
+        # Обновляем сохранённый выбор
+        settings_manager.set('source', name)
+
+        source_manager.set_source(name, path)
+    
+    # Control buttons
+    def on_worker_finished(self):
+        self.run_btn.setEnabled(True) 
+        self.pause_btn.setDisabled(True)
+
     def on_run(self):
-        # кнопки
-        self.run_parsing_btn.setEnabled(False)
+        self.run_btn.setEnabled(False)
         self.pause_btn.setEnabled(True)
-        # self.restart_btn.setEnabled(True)
 
         parser.start()  # запускаем парсер
         
-        # self.items_table.update_row(item_data)
-    # def on_restart(self):
-    #     # отключаем слот, чтобы не обрабатывались старые данные
-    #     try:
-    #         parser.new_data.disconnect(self.on_new_data)
-    #     except TypeError:
-    #         pass
-
-    #     # после остановки воркера снова запустить
-    #     def restart_after_stop():
-    #         parser.stopped.disconnect(restart_after_stop)
-    #         parser.new_data.connect(self.on_new_data)
-    #         parser.start()
-    #         self.run_parsing_btn.setEnabled(False)
-    #         self.pause_btn.setEnabled(True)
-    #         self.restart_btn.setEnabled(True)
-
-    #     parser.stopped.connect(restart_after_stop)
-    #     parser.stop()
-
-    def on_pause(self):
-        # после остановки воркера включаем кнопки
-        def pause_after_stop():
-            parser.stopped.disconnect(pause_after_stop)
-            self.run_parsing_btn.setEnabled(True)
-            # self.restart_btn.setEnabled(True)
-
-        parser.stopped.connect(pause_after_stop)
+    def on_pause(self):        
         parser.stop()
-        self.pause_btn.setEnabled(False)
 
 
         

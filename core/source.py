@@ -1,45 +1,29 @@
 from utils.helpers import load_json_resource
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer
-import logging
 
-class SourceManager(QObject):
-    BASE_DIR = './sources/'
-    
-    source_changed = pyqtSignal(str)
-    source_error = pyqtSignal(str)  # Сигнал об ошибке
-    source_loaded = pyqtSignal(bool, str)
-    
+class SourceManager:
     def __init__(self):
         super().__init__()
         self.source = None
         self.source_valid = False
         self.source_name = None
-        self.source_changed.connect(self._on_source_change)
-        
-        # Настройка логирования
-        self.logger = logging.getLogger(__name__)
 
-    def _on_source_change(self, source_name):
+    def set_source(self, name, path):
         """Загружает новый источник и проверяет его валидность"""
         try:
-            self.source_name = source_name
-            file_path = self.BASE_DIR + source_name
+            self.source_name = name
 
             # Загрузка JSON
-            self.source = load_json_resource(file_path)
+            self.source = load_json_resource(path)
             
             if self.source is None:
-                raise ValueError(f"Не удалось загрузить файл '{file_path}'")
+                raise ValueError(f"Не удалось загрузить файл '{path}'")
             
             # Базовая проверка структуры
             self._validate_source()
             
             self.source_valid = True
-            self.source_loaded.emit(True, source_name)
         except Exception as e:
             self.source_valid = False
-            self.source_loaded.emit(False, source_name)
-            self.source_error.emit(f"Ошибка загрузки источника '{source_name}': {str(e)}")
 
     def _validate_source(self):
         """Проверяет минимальную структуру источника"""
@@ -55,7 +39,7 @@ class SourceManager(QObject):
     def get_settings(self):
         """Получает настройки источника"""
         if not self.source_valid or self.source is None:
-            self.logger.warning("Попытка получить настройки из невалидного источника")
+            print("Попытка получить настройки из невалидного источника")
             return {}
         
         return self.source.get('settings', {})
@@ -68,7 +52,7 @@ class SourceManager(QObject):
     def get_configurations(self):
         """Получает данные из источника"""
         if not self.source_valid or self.source is None:
-            self.logger.warning("Попытка получить данные из невалидного источника")
+            print("Попытка получить данные из невалидного источника")
             return []
         
         return self.source.get('configurations', {})
