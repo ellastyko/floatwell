@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
 
 from .applogs import LogWidget
-from .tables import ItemsTableWidget
+from .tables import ItemsTableWidget, ProxiesTableWidget
 from .nav import NavWidget
 from qt.signals import ui
 
@@ -21,12 +21,12 @@ class MainWidget(QWidget):
         layout.addLayout(self.view_stack, stretch=10)
 
         self.market  = ItemsTableWidget()
+        self.proxies = ProxiesTableWidget()  
         self.logs    = LogWidget()
-        self.proxies = QWidget()  # заглушка
 
         self.view_stack.addWidget(self.market)
-        self.view_stack.addWidget(self.logs)
         self.view_stack.addWidget(self.proxies)
+        self.view_stack.addWidget(self.logs)
 
         ui.mode.connect(self.mode_changed)
 

@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QObject, pyqtSignal
-from qt.widgets.main.tables import dispatcher
+from qt.signals import table_dispatcher
 from qt.notifier import short_notify
 
 class ListingsRepository(QObject):
@@ -33,13 +33,13 @@ class ListingsRepository(QObject):
                 'assets_col': ", ".join(item["name"] for item in item['assets']),
                 'float_col': item['float']['value'],
                 'pattern_col': pattern_col,
-                'converted_price_col': f"{item['converted_min_price']} {csymbol} -> {item['converted_price']} {csymbol} ({price_diff}%)",
+                'converted_price_col': f"{item['converted_min_price']}{csymbol} -> {item['converted_price']}{csymbol} ({price_diff}%)",
                 'inspect_link_col': item['inspect_link'],
                 'buy_url_col': item['buy_url'],
                 'sync_at_col': item['sync_at'],
             })
         
-        dispatcher.add_rows.emit(rows)
+        table_dispatcher.items_table.emit(rows)
 
         short_notify(f"{item['name']}", f"Listings added ({len(rows)})")
 

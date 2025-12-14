@@ -3,17 +3,15 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt
 import webbrowser
 from qt.style import StyleManager
 from PyQt5.QtGui import QColor
+from qt.signals import table_dispatcher
 
-class ItemsTableDispatcher(QObject):
-    add_rows = pyqtSignal(list)
 
-dispatcher = ItemsTableDispatcher()
-
+# Items table
 class ItemsTableWidget(QWidget):
     def __init__(self):
         super().__init__()
         self._init_ui()
-        dispatcher.add_rows.connect(self.add_rows)
+        table_dispatcher.items_table.connect(self.add_rows)
 
     def _init_ui(self):
         layout = QVBoxLayout()
@@ -95,5 +93,62 @@ class ItemsTableWidget(QWidget):
         if row >= 0:
             self.table_widget.removeRow(row)
 
+    def reset_table(self):
+        self.table_widget.setRowCount(0)
+
+# Items table
+class ProxiesTableWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self._init_ui()
+        table_dispatcher.proxies_table.connect(self.add_rows)
+
+    def _init_ui(self):
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.table_widget = QTableWidget(0, 6)
+        self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
+        self.table_widget.setHorizontalHeaderLabels(
+            ["IP", "Port", "Country Code", "Username", "Password", "Statictic", "Last used at"]
+        )
+
+        header = self.table_widget.horizontalHeader()
+
+        # Настроим размеры колонок
+        header.setSectionResizeMode(0, QHeaderView.Stretch)  
+        header.setSectionResizeMode(1, QHeaderView.Stretch) 
+        # header.setMaximumSectionSize(300) 
+        header.setSectionResizeMode(2, QHeaderView.Stretch) 
+        header.setSectionResizeMode(3, QHeaderView.Stretch) 
+        header.setSectionResizeMode(4, QHeaderView.Stretch) 
+        header.setSectionResizeMode(5, QHeaderView.Stretch) 
+        header.setSectionResizeMode(6, QHeaderView.Stretch) 
+
+        # self.table_widget.setColumnWidth(5, 120)  # меньше, чем растягиваемые колонки
+        # # Фиксируем ширину для кнопок и Sync At
+        # self.table_widget.setColumnWidth(6, 80)
+        # self.table_widget.setColumnWidth(7, 80)
+        # self.table_widget.setColumnWidth(8, 80)
+
+        table_box = QGroupBox(" Proxies ")
+        table_layout = QVBoxLayout()
+        table_layout.addWidget(self.table_widget)
+        table_box.setLayout(table_layout)
+        layout.addWidget(table_box)
+    
+    def add_rows(self, items):
+        for item in items:
+            self.table_widget.insertRow(0)
+            name_item = QTableWidgetItem(item["ip"])
+            name_item.setData(Qt.UserRole, item["ip"] + item["port"])  # храним уникальный ID
+            self.table_widget.setItem(0, 0, name_item)
+            self.table_widget.setItem(0, 1, QTableWidgetItem(str(item["port"])))
+            self.table_widget.setItem(0, 2, QTableWidgetItem(str(item["country_code"])))
+            self.table_widget.setItem(0, 3, QTableWidgetItem(str(item["username"])))
+            self.table_widget.setItem(0, 4, QTableWidgetItem(str(item["password"])))
+            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["statistic"])))
+            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["last_used_at"])))
+        
     def reset_table(self):
         self.table_widget.setRowCount(0)
