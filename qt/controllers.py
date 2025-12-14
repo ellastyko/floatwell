@@ -16,15 +16,15 @@ class ParserController(QObject):
         self.worker.finished.connect(self.on_worker_finished)
 
     def start(self):
-        print('controller start')
+        # print('controller start')
         self.thread.start()
     
     def stop(self):
-        print('controller stop')
+        # print('controller stop')
         self.worker.stop()  # сигнал воркеру завершиться
 
     def on_worker_finished(self):
-        print('on_worker_finished')
+        # print('on_worker_finished')
         self.thread.quit()
         self.thread.wait()
         self.stopped.emit()

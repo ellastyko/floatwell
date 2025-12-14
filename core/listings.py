@@ -174,7 +174,6 @@ class ListingAnalyzer:
 
             if pattern_match:
                 price_tolerance = patternInfo["price_tolerance"][self.EXTERIORS_FULL[exterior]] if self.config['has_exteriors'] else patternInfo["price_tolerance"]
-                # tier = patternInfo.get("range", [])
 
                 return {"is_rear": True, "rank": rank, "price_tolerance": price_tolerance, "value": pattern}  
 

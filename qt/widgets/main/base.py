@@ -17,7 +17,7 @@ class MainWidget(QWidget):
         self.nav = NavWidget(self)
         self.view_stack = QStackedLayout()
 
-        layout.addWidget(self.nav)
+        layout.addWidget(self.nav, stretch=1)
         layout.addLayout(self.view_stack, stretch=10)
 
         self.market  = ItemsTableWidget()
