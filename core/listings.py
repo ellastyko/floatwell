@@ -1,8 +1,6 @@
 from urllib.parse import quote
-import time
 from utils.requests import send_request
 from utils.logs import log
-from utils.helpers import load_json_resource
 from typing import Optional
 from qt.signals import applog
 import re, json

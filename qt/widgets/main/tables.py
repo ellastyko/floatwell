@@ -5,7 +5,6 @@ from qt.style import StyleManager
 from PyQt5.QtGui import QColor
 from qt.signals import table_dispatcher
 
-
 # Items table
 class ItemsTableWidget(QWidget):
     def __init__(self):
@@ -96,59 +95,142 @@ class ItemsTableWidget(QWidget):
     def reset_table(self):
         self.table_widget.setRowCount(0)
 
-# Items table
+# Proxies table
 class ProxiesTableWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self._row_by_key: dict[str, int] = {}
         self._init_ui()
-        table_dispatcher.proxies_table.connect(self.add_rows)
+
+        table_dispatcher.proxies_table_insert.connect(self.insert_rows)
+        table_dispatcher.proxies_table_update.connect(self.update_rows)
+
+    # ---------------- UI ---------------- #
 
     def _init_ui(self):
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        layout = QVBoxLayout(self)
 
-        self.table_widget = QTableWidget(0, 6)
-        self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
-        self.table_widget.setHorizontalHeaderLabels(
-            ["IP", "Port", "Country Code", "Username", "Password", "Statictic", "Last used at"]
-        )
+        self.table = QTableWidget(0, 7)
+        self.table.setStyleSheet(StyleManager.get_style("QTable"))
+        self.table.setHorizontalHeaderLabels([
+            "IP", "Port", "Country",
+            "Username", "Password",
+            "Success rate", "Last used at"
+        ])
 
-        header = self.table_widget.horizontalHeader()
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.Stretch)
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
 
-        # Настроим размеры колонок
-        header.setSectionResizeMode(0, QHeaderView.Stretch)  
-        header.setSectionResizeMode(1, QHeaderView.Stretch) 
-        # header.setMaximumSectionSize(300) 
-        header.setSectionResizeMode(2, QHeaderView.Stretch) 
-        header.setSectionResizeMode(3, QHeaderView.Stretch) 
-        header.setSectionResizeMode(4, QHeaderView.Stretch) 
-        header.setSectionResizeMode(5, QHeaderView.Stretch) 
-        header.setSectionResizeMode(6, QHeaderView.Stretch) 
+        box = QGroupBox(" Proxies ")
+        box_layout = QVBoxLayout(box)
+        box_layout.addWidget(self.table)
+        layout.addWidget(box)
 
-        # self.table_widget.setColumnWidth(5, 120)  # меньше, чем растягиваемые колонки
-        # # Фиксируем ширину для кнопок и Sync At
-        # self.table_widget.setColumnWidth(6, 80)
-        # self.table_widget.setColumnWidth(7, 80)
-        # self.table_widget.setColumnWidth(8, 80)
+    # ---------------- Public API ---------------- #
 
-        table_box = QGroupBox(" Proxies ")
-        table_layout = QVBoxLayout()
-        table_layout.addWidget(self.table_widget)
-        table_box.setLayout(table_layout)
-        layout.addWidget(table_box)
-    
-    def add_rows(self, items):
-        for item in items:
-            self.table_widget.insertRow(0)
-            name_item = QTableWidgetItem(item["ip"])
-            name_item.setData(Qt.UserRole, item["ip"] + item["port"])  # храним уникальный ID
-            self.table_widget.setItem(0, 0, name_item)
-            self.table_widget.setItem(0, 1, QTableWidgetItem(str(item["port"])))
-            self.table_widget.setItem(0, 2, QTableWidgetItem(str(item["country_code"])))
-            self.table_widget.setItem(0, 3, QTableWidgetItem(str(item["username"])))
-            self.table_widget.setItem(0, 4, QTableWidgetItem(str(item["password"])))
-            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["statistic"])))
-            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["last_used_at"])))
-        
+    def insert_rows(self, rows: list[dict]):
+        """
+        Добавляет ТОЛЬКО новые строки
+        """
+        for row in rows:
+            key = self._key(row)
+            if key in self._row_by_key:
+                continue
+
+            row_idx = self.table.rowCount()
+            self.table.insertRow(row_idx)
+            self._row_by_key[key] = row_idx
+
+            self._fill_row(row_idx, row)
+
+    def update_rows(self, rows: list[dict]):
+        """
+        Обновляет существующие строки
+        """
+        for row in rows:
+            key = self._key(row)
+            row_idx = self._row_by_key.get(key)
+
+            if row_idx is None:
+                continue  # защита
+
+            self._fill_row(row_idx, row)
+
     def reset_table(self):
-        self.table_widget.setRowCount(0)
+        self.table.setRowCount(0)
+        self._row_by_key.clear()
+
+    # ---------------- Internals ---------------- #
+
+    def _fill_row(self, row: int, data: dict):
+        self._set(row, 0, data['ip'])
+        self._set(row, 1, data['port'])
+        self._set(row, 2, data.get('country_code'))
+        self._set(row, 3, data.get('username'))
+        self._set(row, 4, data.get('password'))
+        # Statistic: отображаем и храним числовое значение для сортировки
+        stat = data.get('success_rate')
+        self._set(row, 5, self._format_stat(stat))
+        item = self.table.item(row, 5)
+        if item:
+            item.setData(Qt.UserRole, stat if stat is not None else -1)  # для сортировки
+
+        self._set(row, 6, self._format_time(data.get('last_used_at')))
+
+        # ---------------- Цветовая подсветка ---------------- #
+        self._update_row_color(row, data.get('success_rate'))
+
+    # ---------------- Цветовая подсветка ---------------- #
+    def _update_row_color(self, row: int, stat):
+        colors = {
+            "success": "#28a745",
+            "warning": "#d7ba7d",
+            "error": "#f48771",
+            "default": self.table.palette().base().color().name()
+        }
+
+        if stat is None:
+            color = colors["default"]
+        elif stat >= 80:
+            color = colors["success"]
+        elif stat < 30:
+            color = colors["error"]
+        else:
+            color = colors["warning"]
+
+        # Применяем цвет ко всем ячейкам строки
+        for col in range(self.table.columnCount()):
+            item = self.table.item(row, col)
+            if item:
+                item.setBackground(QColor(color))
+            
+    def _set(self, row: int, col: int, value):
+        item = self.table.item(row, col)
+        if item is None:
+            item = QTableWidgetItem()
+            self.table.setItem(row, col, item)
+
+        item.setText("" if value is None else str(value))
+
+    @staticmethod
+    def _key(row: dict) -> str:
+        return f"{row['ip']}:{row['port']}"
+
+    @staticmethod
+    def _format_stat(stat):
+        if not stat:
+            return "—"
+        return f"{stat}%"
+
+    @staticmethod
+    def _format_time(dt):
+        if not dt:
+            return "—"
+        return dt.strftime("%H:%M:%S")
+

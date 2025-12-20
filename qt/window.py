@@ -8,6 +8,9 @@ from qt.widgets.main import MainWidget
 from qt.widgets.status import StatusBar
 from utils.helpers import resource_path
 from core.telegram import TelegramBotService
+from core.proxy import proxy_service
+from core.repositories import proxy_repository
+from qt.signals import applog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -39,14 +42,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockw)
         self.dockw.setContextMenuPolicy(Qt.PreventContextMenu)
 
-        # bot = TelegramBotService(
-        #     token='7585609752:AAGT31u1vkSvU7p4Cfl7QE6L8N-Rq8JRLFY',
-        #     whitelist_chat_ids=[487961110]
-        # )
-        # bot.start()
-        # bot.info("Приложение запущено")
-        # bot.error("Steam timeout", {"proxy": "1.2.3.4"})
-
+        self._setup_proxies()
 
         # Статус бар
         status_bar = StatusBar()
@@ -86,3 +82,8 @@ class MainWindow(QMainWindow):
         """Скрываем окно вместо выхода"""
         event.ignore()
         self.hide()
+
+    # Add proxies to table
+    def _setup_proxies(self):
+        proxy_repository.upsert(proxy_service.proxies)
+        # applog.log_message.emit('Proxies added', 'info')

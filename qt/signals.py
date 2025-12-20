@@ -9,7 +9,8 @@ class AppLogDispatcher(QObject):
 
 class ItemsTableDispatcher(QObject):
     items_table   = pyqtSignal(list)
-    proxies_table = pyqtSignal(list)
+    proxies_table_insert = pyqtSignal(list)
+    proxies_table_update = pyqtSignal(list)
 
 table_dispatcher = ItemsTableDispatcher()
 

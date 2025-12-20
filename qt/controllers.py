@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import QObject, pyqtSignal
 from qt.workers import ListingWorker
+from qt.signals import applog
 
 class ParserController(QObject):
     stopped  = pyqtSignal()
@@ -18,6 +19,8 @@ class ParserController(QObject):
     def start(self):
         # print('controller start')
         self.thread.start()
+        applog.log_message.emit('Listing worker starting...', 'warning')
+
     
     def stop(self):
         # print('controller stop')
@@ -28,5 +31,6 @@ class ParserController(QObject):
         self.thread.quit()
         self.thread.wait()
         self.stopped.emit()
+        applog.log_message.emit('Listing worker stopped.', 'warning')
     
 parser = ParserController()

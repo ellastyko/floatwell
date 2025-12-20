@@ -1,9 +1,9 @@
 {
   "currency": {
-    "code": "KZT",
-    "id": 35,
-    "name": "Kazakhstani Tenge",
-    "symbol": "₸"
+    "code": "UAH",
+    "id": 18,
+    "name": "Ukrainian Hryvnia",
+    "symbol": "₴"
   },
   "source": "attachments.json",
   "synchronisations": {

@@ -5,7 +5,8 @@ from core.listings import ListingsParser, ListingAnalyzer
 from utils.helpers import load_json_resource
 from utils.market import price_difference
 from configurator import config
-from qt.repositories import ListingsRepository
+from core.repositories import ListingsRepository
+from core.repositories import proxy_repository
 from core.proxy import proxy_service
 from core.source import source_manager
 from core.settings import settings_manager
@@ -20,7 +21,6 @@ EXTERIORS = [
     "Battle-Scarred"
 ]
 
-
 class ListingWorker(QObject):
     finished = pyqtSignal()
 
@@ -32,8 +32,6 @@ class ListingWorker(QObject):
         super().__init__()
         self._running = False
         self._tasks   = []
-
-        self.proxies = load_json_resource(config['resources']['proxies'])
 
     # -------------------- public API --------------------
 
@@ -123,14 +121,28 @@ class ListingWorker(QObject):
 
         with proxy_ctx as proxy:
             data = self.listings.get(hash_name, self.currency, proxy)
+            # если запрос успешен я прокину значения куда надо. Просто дай мне 
 
-        if data is None:
-            # retry без блокировки
-            self._timer.start(self.RETRY_DELAY_MS)
-            return
+            if data is None:
+                proxy_ctx.report(False)
+                # retry без блокировки
+                self._timer.start(self.RETRY_DELAY_MS)
+                return
+            
+            proxy_ctx.report(True)
+        
+        stats = proxy_service.get_stats(proxy)
 
+        proxy_repository.update([{
+            **proxy,
+            'success_rate': stats.success_rate,
+            'last_used_at': stats.last_used_at,
+        }])
+        
         result = self._analyze_items(data, exterior)
-        self.repository.add_items.emit(result)
+
+        # Add items to repository
+        self.repository.add(result)
 
         # задержка перед следующей задачей
         self._timer.start(self.REQUEST_DELAY_MS)

@@ -13,6 +13,7 @@ class LogWidget(QTextEdit):
         # Подключаем сигналы к слотам
         self.signals.log_message.connect(self._append_log_message, Qt.QueuedConnection)
         self.signals.clear_logs.connect(self._clear_logs, Qt.QueuedConnection)
+        self._append_log_message('Logger initialized!', 'success')
         
     def _init_ui(self):
         self.setReadOnly(True)
