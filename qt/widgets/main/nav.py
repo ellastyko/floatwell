@@ -16,7 +16,7 @@ class NavWidget(QWidget):
         buttons = [
             ("Listings", lambda: ui.mode.emit('listings')),
             ("Logs", lambda: ui.mode.emit('logs')),
-            # ("Proxies", lambda: ui.mode.emit('proxies')),
+            ("Proxies", lambda: ui.mode.emit('proxies')),
         ]
 
         # Создаем группу для основных кнопок (работают как радио-кнопки)

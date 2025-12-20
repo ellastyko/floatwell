@@ -121,16 +121,10 @@ class ListingWorker(QObject):
 
         with proxy_ctx as proxy:
             data = self.listings.get(hash_name, self.currency, proxy)
-            # если запрос успешен я прокину значения куда надо. Просто дай мне 
 
-            if data is None:
-                proxy_ctx.report(False)
-                # retry без блокировки
-                self._timer.start(self.RETRY_DELAY_MS)
-                return
-            
-            proxy_ctx.report(True)
+            proxy_ctx.report(False) if data is None else proxy_ctx.report(True)
         
+        # Update proxy stats
         stats = proxy_service.get_stats(proxy)
 
         proxy_repository.update([{
@@ -138,7 +132,12 @@ class ListingWorker(QObject):
             'success_rate': stats.success_rate,
             'last_used_at': stats.last_used_at,
         }])
-        
+
+        if data is None:
+            # retry без блокировки
+            self._timer.start(self.RETRY_DELAY_MS)
+            return
+
         result = self._analyze_items(data, exterior)
 
         # Add items to repository
