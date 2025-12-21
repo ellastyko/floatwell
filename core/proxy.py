@@ -52,11 +52,11 @@ class ProxyContext:
             stats.failed += 1
 
         # 🔹 лог
-        log(
-            f"🧷 Proxy {prx} released | "
-            f"duration={duration_ms}ms | "
-            f"time={finished_at.strftime('%H:%M:%S')}"
-        )
+        # log(
+        #     f"🧷 Proxy {prx} released | "
+        #     f"duration={duration_ms}ms | "
+        #     f"time={finished_at.strftime('%H:%M:%S')}"
+        # )
 
         self._sem.release()
     

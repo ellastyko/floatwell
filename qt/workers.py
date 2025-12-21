@@ -11,6 +11,7 @@ from core.proxy import proxy_service
 from core.source import source_manager
 from core.settings import settings_manager
 from utils.logs import log
+from utils.market import match_rule
 from qt.signals import applog
 
 EXTERIORS = [
@@ -24,7 +25,7 @@ EXTERIORS = [
 class ListingWorker(QObject):
     finished = pyqtSignal()
 
-    REQUEST_DELAY_MS = 500
+    REQUEST_DELAY_MS = 50
     RETRY_DELAY_MS   = 500
     ITERATION_DELAY  = 10_000
 
@@ -66,6 +67,7 @@ class ListingWorker(QObject):
         if not source_manager.is_source_valid():
             raise Exception("Invalid source")
 
+        self.source_settings       = source_manager.get_settings()
         self.source_filters        = source_manager.get_filters()
         self.source_configurations = source_manager.get_configurations()
 
@@ -120,7 +122,7 @@ class ListingWorker(QObject):
             return
 
         with proxy_ctx as proxy:
-            data = self.listings.get(hash_name, self.currency, proxy)
+            data, total_count = self.listings.get(hash_name, self.currency, proxy)
 
             proxy_ctx.report(False) if data is None else proxy_ctx.report(True)
         
@@ -158,25 +160,42 @@ class ListingWorker(QObject):
             pattern_info = self.analyzer.get_pattern_info(item['pattern'], exterior)
             float_info   = self.analyzer.get_float_info(item['float'], exterior)
             diff         = price_difference(item['converted_price'], min_price)
-
             score = 0
 
-            if 'pattern' in self.source_filters and pattern_info['is_rear'] and pattern_info['price_tolerance'] > diff:
+            if 'pattern' in self.source_filters.keys() and pattern_info['is_rear'] and pattern_info['price_tolerance'] > diff:
                 score += 1
-            if 'float' in self.source_filters and float_info['is_rear']:
+            if 'float' in self.source_filters.keys() and float_info['is_rear']:
                 score += 1
-            if 'keychains' in self.source_filters and item['has_keychain']:
-                score += 1
-            if 'stickers' in self.source_filters and item['has_sticker']:
+            if 'keychains' in self.source_filters.keys() and item['has_keychain']:
+                rules = self.source_filters['keychains'] 
+
+                for ast in item.get('assets', []):
+                    if ast.get("type") != "keychain":
+                        continue
+                    if 'like' in rules:
+                        if match_rule(ast.get('name', ''), rules['like']):
+                            score += 1
+                            break  # достаточно одного совпадения
+                        
+            if 'stickers' in self.source_filters.keys() and item['has_sticker']:
                 score += 1
 
             if score < 1:
                 continue
+            
+            # Через параметр tablepreview.assets можно настроить что будет выводиться в колонке assets
+            assets_categories = self.source_settings.get('tablepreview', {}).get('assets', ['stickers', 'keychains'])
+            
+            assets = []
+            if 'keychains' in assets_categories:
+                assets.extend([a for a in item['assets'] if a["type"] == "keychain"])
+            if 'stickers' in assets_categories:
+                assets.extend([a for a in item['assets'] if a["type"] == "sticker"])
 
             result.append({
                 "name": item['name'],
                 "listing_id": item['listing_id'],
-                "assets": item['assets'],
+                "assets": assets,
                 "buy_url": item['buy_url'],
                 "inspect_link": item['inspect_link'],
                 "pattern": pattern_info,

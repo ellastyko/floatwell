@@ -62,10 +62,17 @@ class MainWindow(QMainWindow):
         self.tray_menu = QtWidgets.QMenu()
         self.tray_menu.setStyleSheet(StyleManager.get_style("QMenu"))
 
-        quit_action = self.tray_menu.addAction("Exit")
-        quit_action.triggered.connect(QtWidgets.qApp.quit)
+        # Название приложения (disabled item)
+        title_action = QtWidgets.QAction("Float Flower", self.tray_menu)
+        title_action.setEnabled(False)
+        self.tray_menu.addAction(title_action)
 
-        self.tray_icon.setContextMenu(self.tray_menu)
+        # Exit
+        quit_action = QtWidgets.QAction("Exit", self.tray_menu)
+        quit_action.triggered.connect(QtWidgets.qApp.quit)
+        self.tray_menu.addAction(quit_action)
+
+        self.tray_icon.setContextMenu(None)
 
         # Обработка кликов
         self.tray_icon.activated.connect(self.on_tray_activated)
@@ -78,8 +85,16 @@ class MainWindow(QMainWindow):
             self.raise_()
             self.activateWindow()
         elif reason == QTI.Context:  # ПКМ
-            # Показываем меню вручную
-            self.tray_menu.exec_(QtGui.QCursor.pos())
+            cursor = QtGui.QCursor.pos()
+            menu_size = self.tray_menu.sizeHint()
+
+            # Меню над курсором (справа-сверху от иконки)
+            pos = QtCore.QPoint(
+                cursor.x(),
+                cursor.y() - menu_size.height()
+            )
+
+            self.tray_menu.popup(pos)
 
     def closeEvent(self, event):
         """Скрываем окно вместо выхода"""

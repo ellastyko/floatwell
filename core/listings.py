@@ -3,7 +3,7 @@ from utils.requests import send_request
 from utils.logs import log
 from typing import Optional
 from qt.signals import applog
-import re, json
+import re
 from typing import List, Dict, Any
 
 # --- Настройка ---
@@ -62,14 +62,14 @@ class ListingsParser:
             for image, title in matches:
                 items.append({
                     "type": block_type,
-                    "name": title,
+                    "name": title.replace(':', ' |'),
                     "image": image
                 })
 
         return items
 
-    def get(self, hash_name: str, currency: dict, proxy: Optional[dict] = None):
-        url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1"
+    def get(self, hash_name: str, currency: dict, proxy: Optional[dict] = None, start = 0):
+        url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1&start={start}"
         
         try:
             response = send_request(url, proxy)
@@ -77,14 +77,14 @@ class ListingsParser:
             if response.status_code != 200:
                 log_message = (f"HTTP Request error ({response.status_code}) via proxy {proxy['ip']}:{proxy['port']}" )
                 applog.log_message.emit(log_message, 'warning')
-                return
+                return None, None
 
             log_message = f"Successful HTTP request via proxy {proxy['ip']}:{proxy['port']} ({response.status_code})"
             applog.log_message.emit(log_message, 'success')
                 
             data = response.json()
             # data = load_json_resource('./storage/snapshots/endpoint.json')
-        
+            total_count = data.get("total_count", None)
             listinginfo = data.get("listinginfo", None)
             assets = data.get("assets", {}).get("730", {}).get("2", None)
 
@@ -92,7 +92,7 @@ class ListingsParser:
                 log_message = f"No assets or listinginfo"
                 log("No assets or listinginfo")
                 applog.log_message.emit(log_message, 'error')
-                return 
+                return None, None
             
             results = []
 
@@ -132,9 +132,10 @@ class ListingsParser:
                     'inspect_link': inspect_link
                 })
 
-            return results
+            return results, total_count
         except Exception as e:
             log(f"Error: {e}")
+            return None, None
 
 # Класс отвечающий за анализ данных полученных из Listings
 class ListingAnalyzer:

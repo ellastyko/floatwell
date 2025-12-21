@@ -181,13 +181,13 @@ class StyleManager:
                 background-color: #2B2B2B;
                 color: #EEE;
                 border: 1px solid #444;
-                padding: 6px;
+                border-radius: 4px;
+                padding: 6px 0;
             }
 
             QMenu::item {
                 padding: 6px 28px 6px 24px;
-                border-radius: 4px;
-                margin: 2px 4px;
+                margin: 0;
             }
 
             QMenu::item:selected {
@@ -201,7 +201,7 @@ class StyleManager:
             QMenu::separator {
                 height: 1px;
                 background: #444;
-                margin: 6px 8px;
+                margin: 6px 0;
             }
         """
     }
