@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QButtonGroup
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QButtonGroup, QSizePolicy
 from qt.signals import ui
 from qt.widgets.components.buttons import PushButton
 
@@ -10,6 +10,15 @@ class NavWidget(QWidget):
         
     def _init_ui(self):
         layout = QHBoxLayout()
+        # ❗ УБИРАЕМ лишнее пространство
+        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setSpacing(4)
+
+        self.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed
+        )
+
         self.setLayout(layout)
 
         # Основные кнопки режимов
@@ -17,6 +26,7 @@ class NavWidget(QWidget):
             ("Listings", lambda: ui.mode.emit('listings')),
             ("Logs", lambda: ui.mode.emit('logs')),
             ("Proxies", lambda: ui.mode.emit('proxies')),
+            ("Autobuy", lambda: ui.mode.emit('autobuy')),
         ]
 
         # Создаем группу для основных кнопок (работают как радио-кнопки)

@@ -147,6 +147,7 @@ class ProxyRepository:
                 'country_code': proxy.get('country_code'),
                 'username': proxy.get('username'),
                 'password': proxy.get('password'),
+                'total_requests': proxy.get('total_requests'),
                 'success_rate': proxy.get('success_rate'),
                 'last_used_at': proxy.get('last_used_at'),
             })

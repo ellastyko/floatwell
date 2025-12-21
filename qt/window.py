@@ -10,7 +10,7 @@ from utils.helpers import resource_path
 from core.telegram import TelegramBotService
 from core.proxy import proxy_service
 from core.repositories import proxy_repository
-from qt.signals import applog
+from qt.style import StyleManager
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -32,6 +32,8 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         central_widget.setLayout(layout)
 
         self.mainWidget     = MainWidget()
@@ -58,6 +60,7 @@ class MainWindow(QMainWindow):
 
         # Меню трея
         self.tray_menu = QtWidgets.QMenu()
+        self.tray_menu.setStyleSheet(StyleManager.get_style("QMenu"))
 
         quit_action = self.tray_menu.addAction("Exit")
         quit_action.triggered.connect(QtWidgets.qApp.quit)

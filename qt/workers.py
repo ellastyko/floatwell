@@ -130,6 +130,7 @@ class ListingWorker(QObject):
         proxy_repository.update([{
             **proxy,
             'success_rate': stats.success_rate,
+            'total_requests': stats.total,
             'last_used_at': stats.last_used_at,
         }])
 

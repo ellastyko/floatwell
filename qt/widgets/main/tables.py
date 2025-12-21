@@ -113,9 +113,9 @@ class ProxiesTableWidget(QWidget):
         self.table = QTableWidget(0, 7)
         self.table.setStyleSheet(StyleManager.get_style("QTable"))
         self.table.setHorizontalHeaderLabels([
-            "IP", "Port", "Country",
+            "IP", "Port", 
             "Username", "Password",
-            "Success rate", "Last used at"
+            "Success rate", "Total Requests", "Last used at"
         ])
 
         header = self.table.horizontalHeader()
@@ -123,9 +123,9 @@ class ProxiesTableWidget(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
-        header.setSectionResizeMode(4, QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
 
         box = QGroupBox(" Proxies ")
         box_layout = QVBoxLayout(box)
@@ -171,16 +171,16 @@ class ProxiesTableWidget(QWidget):
     def _fill_row(self, row: int, data: dict):
         self._set(row, 0, data['ip'])
         self._set(row, 1, data['port'])
-        self._set(row, 2, data.get('country_code'))
-        self._set(row, 3, data.get('username'))
-        self._set(row, 4, data.get('password'))
+        self._set(row, 2, data.get('username'))
+        self._set(row, 3, data.get('password'))
         # Statistic: отображаем и храним числовое значение для сортировки
         stat = data.get('success_rate')
-        self._set(row, 5, self._format_stat(stat))
-        item = self.table.item(row, 5)
+        self._set(row, 4, self._format_stat(stat))
+        item = self.table.item(row, 4)
         if item:
             item.setData(Qt.UserRole, stat if stat is not None else -1)  # для сортировки
 
+        self._set(row, 5, data.get('total_requests', 0))
         self._set(row, 6, self._format_time(data.get('last_used_at')))
 
         # ---------------- Цветовая подсветка ---------------- #
@@ -227,7 +227,7 @@ class ProxiesTableWidget(QWidget):
         if not stat:
             return "—"
         return f"{stat}%"
-
+    
     @staticmethod
     def _format_time(dt):
         if not dt:

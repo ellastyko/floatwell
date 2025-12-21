@@ -15,9 +15,10 @@ class MainWidget(QWidget):
         self.setLayout(layout)
 
         self.nav = NavWidget(self)
+        self.nav.setFixedHeight(48) 
         self.view_stack = QStackedLayout()
 
-        layout.addWidget(self.nav, stretch=1)
+        layout.addWidget(self.nav)
         layout.addLayout(self.view_stack, stretch=10)
 
         self.market  = ItemsTableWidget()

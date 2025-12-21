@@ -175,6 +175,34 @@ class StyleManager:
                 background-color: #333;
                 border: 1px solid #444;
             }
+        """,
+        "QMenu": """
+            QMenu {
+                background-color: #2B2B2B;
+                color: #EEE;
+                border: 1px solid #444;
+                padding: 6px;
+            }
+
+            QMenu::item {
+                padding: 6px 28px 6px 24px;
+                border-radius: 4px;
+                margin: 2px 4px;
+            }
+
+            QMenu::item:selected {
+                background-color: #505050;
+            }
+
+            QMenu::item:disabled {
+                color: #777;
+            }
+
+            QMenu::separator {
+                height: 1px;
+                background: #444;
+                margin: 6px 8px;
+            }
         """
     }
     
