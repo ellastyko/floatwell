@@ -116,6 +116,8 @@ class ControlPanel(QGroupBox):
             index = combo.findText(saved_source)
             if index != -1:
                 combo.setCurrentIndex(index)
+                name = combo.itemText(index)
+                path = combo.itemData(index)
                 source_manager.set_source(name, path)
 
         combo.currentIndexChanged.connect(self.source_changed)
