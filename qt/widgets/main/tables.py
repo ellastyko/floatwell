@@ -12,12 +12,23 @@ class ItemsTableWidget(QWidget):
     def __init__(self):
         super().__init__()
         self._init_ui()
+        # self._setup_style()
         table_dispatcher.items_table.connect(self.add_rows)
+    
+    # def _setup_style(self):
+    #     self.setStyleSheet("""
+    #         QWidget {
+    #             background-color: #1e1e1e;
+    #             color: #d4d4d4;
+    #             border: 1px solid #444;
+    #             selection-background-color: #264f78;
+    #         }
+    #     """)
 
     def _init_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
-
+        layout.setContentsMargins(0, 0, 0, 0)
         self.table_widget = QTableWidget(0, 9)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
         self.table_widget.setHorizontalHeaderLabels(
@@ -45,11 +56,9 @@ class ItemsTableWidget(QWidget):
         self.table_widget.setColumnWidth(7, 80)
         self.table_widget.setColumnWidth(8, 80)
 
-        table_box = QGroupBox(" Listings ")
-        table_layout = QVBoxLayout()
-        table_layout.addWidget(self.table_widget)
-        table_box.setLayout(table_layout)
-        layout.addWidget(table_box)
+        # table_layout = QVBoxLayout()
+        # table_layout.addWidget(self.table_widget)
+        layout.addWidget(self.table_widget)
     
     def add_rows(self, items):
         for item in items:

@@ -10,7 +10,12 @@ class SessionTime(QLabel):
 
     def __init_ui(self):
         self.setAlignment(Qt.AlignVCenter)
-        self.setStyleSheet("padding: 0 8px;")
+        self.setStyleSheet("""
+            padding: 0 8px;               
+            color: #8E9297;
+            background: transparent;
+            border: none;
+        """)
         self.setText("Session: 00:00:00")
 
     def __init_timer(self):
@@ -29,3 +34,14 @@ class SessionTime(QLabel):
         seconds = total % 60
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
+class AppVersionLabel(QLabel):
+    def __init__(self, version: str):
+        super().__init__(f"Float Flower v{version}")
+        self.setStyleSheet("""
+            QLabel {
+                padding: 0 8px;  
+                color: #8E9297;      /* приглушённый discord-style */
+                padding-right: 6px;
+                background: transparent;
+            }
+        """)

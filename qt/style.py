@@ -150,31 +150,79 @@ class StyleManager:
         """,
 
         "QTable": """
-            QHeaderView::section {
-                background-color: #333;
-                color: #EEE;
-                padding: 4px;
-                font-weight: bold;
-            }
+                /* ===== TABLE ===== */
+                QTableWidget {
+                    background-color: #1e1e1e;
+                    color: #d4d4d4;
+                    border: 1px solid #2a2a2a;
+                    gridline-color: #2a2a2a;
+                    selection-background-color: #264f78; /* fallback */
+                    selection-color: #ffffff;
+                }
 
-            QTableWidget {
-                border: none;
-                background-color: #222;
-                color: #EEE;
-                gridline-color: #444;
-                selection-background-color: #444;
-                selection-color: #FFF;
-            }
+                QTableWidget::item {
+                    padding: 6px;
+                    border: none;
+                }
 
-            QTableWidget::item {
-                padding: 4px;
-            }
+                QTableWidget::item:selected {
+                    background-color: #264f78;
+                    color: #ffffff;
+                }
 
-            /* стилизуем верхний левый угол */
-            QTableCornerButton::section {
-                background-color: #333;
-                border: 1px solid #444;
-            }
+                QTableWidget::item:hover {
+                    background-color: #2a2d2e;
+                }
+
+                /* ===== HEADER ===== */
+                QHeaderView::section {
+                    background-color: #252526;
+                    color: #d4d4d4;
+                    padding: 6px;
+                    font-weight: 600;
+                    border: none;
+                    border-right: 1px solid #2a2a2a;
+                    border-bottom: 1px solid #2a2a2a;
+                }
+
+                QHeaderView::section:hover {
+                    background-color: #2d2d2d;
+                }
+
+                /* ===== CORNER BUTTON ===== */
+                QTableCornerButton::section {
+                    background-color: #252526;
+                    border: none;
+                    border-right: 1px solid #2a2a2a;
+                    border-bottom: 1px solid #2a2a2a;
+                }
+
+                /* ===== SCROLLBAR (optional, but fits theme) ===== */
+                QScrollBar:vertical {
+                    background: #1e1e1e;
+                    width: 10px;
+                    margin: 0;
+                }
+
+                QScrollBar::handle:vertical {
+                    background: #3a3a3a;
+                    min-height: 20px;
+                    border-radius: 4px;
+                }
+
+                QScrollBar::handle:vertical:hover {
+                    background: #4a4a4a;
+                }
+
+                QScrollBar::add-line:vertical,
+                QScrollBar::sub-line:vertical {
+                    height: 0;
+                }
+
+                QScrollBar::add-page:vertical,
+                QScrollBar::sub-page:vertical {
+                    background: none;
+                }
         """,
         "QMenu": """
             QMenu {

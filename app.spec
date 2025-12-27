@@ -12,6 +12,10 @@ a = Analysis(
         ('configs/settings.json', 'configs'),
         
         ('assets/images/logo.jpg', 'assets/images'),
+        ('assets/images/logo.jpg', 'assets/images'),
+        ('assets/images/navigation/logs.svg', 'assets/images/navigation'),
+        ('assets/images/navigation/proxies.svg', 'assets/images/navigation'),
+        ('assets/images/navigation/listings.svg', 'assets/images/navigation'),
 
         ('sources/rare.json', 'sources'),
         ('sources/attachments.json', 'sources'),
@@ -54,5 +58,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Float Flower (v0.5)',  # Директория с exe
+    name='Float Flower (v0.6)',  # Директория с exe
 )

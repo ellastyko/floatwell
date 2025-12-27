@@ -16,7 +16,7 @@ class MainWidget(QWidget):
         self.view_stack = QStackedLayout()
         layout.addLayout(self.view_stack)
         layout.setContentsMargins(0, 0, 0, 0)
-
+        
         self.market  = ItemsTableWidget()
         self.proxies = ProxiesTableWidget()  
         self.logs    = LogWidget()

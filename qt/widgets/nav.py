@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QButtonGroup, QSizePolicy
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, Qt
 from qt.signals import ui
 from qt.widgets.components.buttons import NavButton
 from utils.helpers import resource_path
@@ -16,6 +16,12 @@ class NavWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(8, 40, 8, 8)  # увеличенный верхний отступ
         layout.setSpacing(10)  # расстояние между кнопками
+        # self.setAttribute(Qt.WA_StyledBackground, True)
+        # self.setStyleSheet("""
+        #     QWidget {
+        #         background-color: red;
+        #     }
+        # """)
 
         self.setFixedWidth(60)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
