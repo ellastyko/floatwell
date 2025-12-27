@@ -4,11 +4,13 @@ from utils.logs import log
 from typing import Optional
 from qt.signals import applog
 import re
+from utils.helpers import load_json_resource, save_json_resource
 from typing import List, Dict, Any
 
 # --- Настройка ---
 class ListingsParser:
     BASE_URL = 'https://steamcommunity.com/market/listings/730'
+    BASE_IMAGE_URL = 'https://community.akamai.steamstatic.com/economy/image'
 
     def __init__(self, error_timeout = 1):
         self.error_timeout = error_timeout
@@ -68,8 +70,8 @@ class ListingsParser:
 
         return items
 
-    def get(self, hash_name: str, currency: dict, proxy: Optional[dict] = None, start = 0):
-        url = f"{self.BASE_URL}/{quote(hash_name)}/render?count=100&currency={currency['id']}&norender=1&start={start}"
+    def get(self, hash_name: str, currency: dict, proxy: Optional[dict] = None, start: int = 0, per_page: int = 100):
+        url = f"{self.BASE_URL}/{quote(hash_name)}/render?count={per_page}&currency={currency['id']}&norender=1&start={start}"
         
         try:
             response = send_request(url, proxy)
@@ -83,110 +85,61 @@ class ListingsParser:
             applog.log_message.emit(log_message, 'success')
                 
             data = response.json()
-            # data = load_json_resource('./storage/snapshots/endpoint.json')
-            total_count = data.get("total_count", None)
-            listinginfo = data.get("listinginfo", None)
-            assets = data.get("assets", {}).get("730", {}).get("2", None)
-
-            if not assets or not listinginfo:
-                log_message = f"No assets or listinginfo"
-                log("No assets or listinginfo")
-                applog.log_message.emit(log_message, 'error')
-                return None, None
-            
-            results = []
-
-            for listing_id, listing in listinginfo.items():
-                if not self.is_valid_listing(listing):
-                    continue
-
-                asset_id = listing['asset']['id']
-
-                asset = assets[asset_id]
-                props = asset.get("asset_properties", [])
-
-                if not props:
-                    log('No asset properties')
-                    continue
-
-                pattern      = self.extract_pattern(props)
-                float        = self.extract_float(props)
-                inspect_link = self.get_inspect_link(listing)
-                assets_list  = self.get_assets(asset['descriptions'])
-
-                # Logging
-                # log_message = f"{asset['market_hash_name']}; Listing: {listing_id}; Pattern: {pattern}; Float: {float}"
-                # applog.log_message.emit(log_message, 'info')
-
-                results.append({
-                    "name": asset['market_hash_name'],
-                    "listing_id": listing_id,
-                    "pattern": pattern,
-                    "float": float,
-                    "price": (int(listing['price']) + int(listing['fee'])) / 100,
-                    "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
-                    'assets': assets_list,
-                    'has_keychain': any(item["type"] == "keychain" for item in assets_list),
-                    'has_stickers': any(item["type"] == "sticker" for item in assets_list),
-                    'buy_url': f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
-                    'inspect_link': inspect_link
-                })
-
-            return results, total_count
         except Exception as e:
             log(f"Error: {e}")
             return None, None
+        
+        # data = load_json_resource('./storage/snapshots/endpoint.json')
+        total_count = data.get("total_count", 0)
 
-# Класс отвечающий за анализ данных полученных из Listings
-class ListingAnalyzer:
-    EXTERIORS_FULL = {
-        "Factory New": "FN",
-        "Minimal Wear": "MW",
-        "Field-Tested": "FT",
-        "Well-Worn": "WW",
-        "Battle-Scarred": "BS"
-    }
+        if total_count == 0:
+            log_message = f"Listings not found for {hash_name}"
+            applog.log_message.emit(log_message, 'warning')
+            return None, None
 
-    def __init__(self,):
-        pass
+        listinginfo = data.get("listinginfo", None)
+        assets = data.get("assets", {}).get("730", {}).get("2", None)
 
-    def set_configuration(self, config: dict):
-        self.config = config
+        results = []
 
-    def get_pattern_info(self, pattern: int, exterior: str | None) -> bool:
-        # --- Проверяем паттерн ---
-        pattern_rules = self.config.get("pattern", {})
+        for listing_id, listing in listinginfo.items():
+            if not self.is_valid_listing(listing):
+                continue
 
-        for rank, patternInfo in pattern_rules.items():
-            pattern_values = patternInfo.get("pattern_values", [])
-            pattern_range  = patternInfo.get("range", [])
+            asset_id = listing['asset']['id']
 
-            # Мэтч происходит либо по range либо по конкретным паттернам
-            pattern_match = (
-                pattern in pattern_values
-                or (
-                    isinstance(pattern_range, list) 
-                    and len(pattern_range) == 2 
-                    and pattern_range[0] <= pattern <= pattern_range[1]
-                )
-            )
+            asset = assets[asset_id]
+            props = asset.get("asset_properties", [])
 
-            if pattern_match:
-                price_tolerance = patternInfo["price_tolerance"][self.EXTERIORS_FULL[exterior]] if self.config['has_exteriors'] else patternInfo["price_tolerance"]
+            if not props:
+                log('No asset properties')
+                continue
 
-                return {"is_rear": True, "rank": rank, "price_tolerance": price_tolerance, "value": pattern}  
+            results.append({
+                "name":            asset['name'],
+                "hash_name":       asset['market_hash_name'],
+                "type":            asset['type'],
+                "image":           f"{self.BASE_IMAGE_URL}/{asset['icon_url']}",
+                "listing_id":      listing_id,
+                "pattern":         self.extract_pattern(props),
+                "float":           self.extract_float(props),
+                "price":           (int(listing['price']) + int(listing['fee'])) / 100,
+                "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
+                'assets':          self.get_assets(asset['descriptions']),
+                'buy_url':         f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
+                'inspect_link':    self.get_inspect_link(listing),
+                "is_valid":        True,
+            })
 
-        return {"is_rear": False, "value": pattern}
-    
-    def get_float_info(self, float_value: float, exterior: str | None) -> bool:
-        # --- Проверяем флоат ---
-        float_rules = self.config.get("float", {})
+        has_more = (start + per_page) < total_count
 
-        if exterior and exterior in float_rules:
-            frange = float_rules[self.EXTERIORS_FULL[exterior]]
-            if frange["min"] <= float_value <= frange["max"]:
-                return {"is_rear": True, "value": float_value}
+        meta = {
+            "total_count": total_count,
+            "start": start,
+            "per_page": per_page,
+            "has_more": has_more,
+            "page": (start / per_page) + 1
+        }
 
-        return {"is_rear": False, "value": float_value}
-
+        return results, meta
 

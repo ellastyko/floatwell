@@ -4,6 +4,8 @@ import webbrowser
 from qt.style import StyleManager
 from PyQt5.QtGui import QColor
 from qt.signals import table_dispatcher
+from qt.widgets.components.cells import AssetsCellWidget, ItemCellWidget
+from qt.widgets.components.buttons import PushButton
 
 # Items table
 class ItemsTableWidget(QWidget):
@@ -19,18 +21,19 @@ class ItemsTableWidget(QWidget):
         self.table_widget = QTableWidget(0, 9)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
         self.table_widget.setHorizontalHeaderLabels(
-            ["Name", "Assets", "Float", "Pattern", "Price", "Sync At", "Inspect", "Steam", "Actions"]
+            ["Name", "Assets", "Price", "Float", "Pattern", "Sync At", "Inspect", "Steam", "Actions"]
         )
 
         header = self.table_widget.horizontalHeader()
 
         # Настроим размеры колонок
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # Name
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Assets
+        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Assets
         # header.setMaximumSectionSize(300) 
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Float
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Pattern
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Price
+        header.setSectionResizeMode(2, QHeaderView.Stretch)  # Price
+
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Float
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Pattern
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Sync At
         header.setSectionResizeMode(6, QHeaderView.Fixed)  # Inspect (кнопка)
         header.setSectionResizeMode(7, QHeaderView.Fixed)  # Buy (кнопка)
@@ -51,27 +54,35 @@ class ItemsTableWidget(QWidget):
     def add_rows(self, items):
         for item in items:
             self.table_widget.insertRow(0)
-            name_item = QTableWidgetItem(item["name_col"])
-            name_item.setData(Qt.UserRole, item["listing_id_col"])  # храним уникальный ID
-            self.table_widget.setItem(0, 0, name_item)
-            self.table_widget.setItem(0, 1, QTableWidgetItem(str(item["assets_col"])))
-            self.table_widget.setItem(0, 2, QTableWidgetItem(str(item["float_col"])))
-            self.table_widget.setItem(0, 3, QTableWidgetItem(str(item["pattern_col"])))
-            self.table_widget.setItem(0, 4, QTableWidgetItem(str(item["converted_price_col"])))
-            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["sync_at_col"])))
+            
+            # Старая версия
+            # name_item = QTableWidgetItem(item["name"])
+            # name_item.setData(Qt.UserRole, item["listing_id"])  # храним уникальный ID
+            # self.table_widget.setItem(0, 0, name_item)
 
-            inspect_button = QPushButton("Inspect")
+            item_name_cell = ItemCellWidget(item["image"], item["name"])
+            self.table_widget.setCellWidget(0, 0, item_name_cell)
+            # Assets
+            assets_widget = AssetsCellWidget(item["assets"])
+            self.table_widget.setCellWidget(0, 1, assets_widget)
+            self.table_widget.setRowHeight(0, 45)
+            self.table_widget.setItem(0, 2, QTableWidgetItem(str(item["converted_price"])))
+            self.table_widget.setItem(0, 3, QTableWidgetItem(str(item["float"])))
+            self.table_widget.setItem(0, 4, QTableWidgetItem(str(item["pattern"])))
+            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["sync_at"])))
+
+            inspect_button = PushButton("Inspect")
             inspect_button.setCursor(Qt.PointingHandCursor)
-            inspect_button.clicked.connect(lambda _, url=item["inspect_link_col"]: webbrowser.open(url))
+            inspect_button.clicked.connect(lambda _, url=item["inspect_link"]: webbrowser.open(url))
             self.table_widget.setCellWidget(0, 6, inspect_button)
 
-            buy_button = QPushButton("Buy")
+            buy_button = PushButton("Buy")
             buy_button.setCursor(Qt.PointingHandCursor)
-            buy_button.clicked.connect(lambda _, url=item["buy_url_col"]: webbrowser.open(url))
+            buy_button.clicked.connect(lambda _, url=item["buy_url"]: webbrowser.open(url))
             self.table_widget.setCellWidget(0, 7, buy_button)
 
              # Remove — ★ new ★
-            remove_button = QPushButton("Remove")
+            remove_button = PushButton("Remove")
             remove_button.setCursor(Qt.PointingHandCursor)
             remove_button.clicked.connect(
                 lambda _, btn=remove_button: self.remove_row(btn)

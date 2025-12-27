@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication
 from qt.window import MainWindow
 from PyQt5 import QtGui
 from utils.helpers import resource_path
+from utils.logs import log
 from configurator import config
 
 # # -------------------------------
@@ -17,3 +18,4 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+    

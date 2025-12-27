@@ -1,9 +1,9 @@
 from .base import SidebarDock
-from .panels import ProxiesPanel, ControlPanel
+from .panels import PreviewPanel, ControlPanel, SettingsPanel
 
-__all__ = [
-    'SidebarDock',
-    'SettingsPanel',
-    'ControlPanel',
-    'ProxiesPanel'
-]
+# __all__ = [
+#     'SidebarDock',
+#     'SettingsPanel',
+#     'ControlPanel',
+#     'PreviewPanel'
+# ]

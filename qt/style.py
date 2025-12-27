@@ -154,11 +154,11 @@ class StyleManager:
                 background-color: #333;
                 color: #EEE;
                 padding: 4px;
-                border: 1px solid #444;
                 font-weight: bold;
             }
 
             QTableWidget {
+                border: none;
                 background-color: #222;
                 color: #EEE;
                 gridline-color: #444;

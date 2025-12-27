@@ -1,9 +1,11 @@
 from qt.signals import table_dispatcher
 from qt.notifier import short_notify
+from core.source.manager import source_manager
 
 class ListingsRepository:
     def __init__(self):
         self.listings = {}  # key = listing_id, value = item_data
+        self.source_globals = source_manager.get_globals()
 
     def add(self, listings: list):
         filtered_listings = self._filter_new(listings)
@@ -37,24 +39,25 @@ class ListingsRepository:
     def _prepare_for_preview(self, listings):
         rows = []
         for listing in listings:
-            csymbol = listing['currency']['symbol']
-            price_diff = f"{listing['diff'] * 100:.1f}"
+            csymbol    = listing['currency']['symbol']
+            price_diff = f"{listing['pricediff'] * 100:.1f}"
 
-            if listing['pattern']['is_rear']:
-                pattern_col = f"{ listing['pattern']['value']} ({listing['pattern']['rank']})"
+            if listing.get('has_rare_pattern'):
+                pattern_col = f"{listing['pattern']} ({listing['patterninfo']['rank']})"
             else:
-                pattern_col = listing['pattern']['value']
+                pattern_col = listing['pattern']
 
             rows.append({
-                'name_col': listing['name'],
-                'listing_id_col': listing['listing_id'],
-                'assets_col': ", ".join(item["name"] for item in listing['assets']),
-                'float_col': listing['float']['value'],
-                'pattern_col': pattern_col,
-                'converted_price_col': f"{listing['converted_min_price']}{csymbol} -> {listing['converted_price']}{csymbol} ({price_diff}%)",
-                'inspect_link_col': listing['inspect_link'],
-                'buy_url_col': listing['buy_url'],
-                'sync_at_col': listing['sync_at'],
+                'name':             listing['hash_name'],
+                'image':            listing['image'],
+                'listing_id':       listing['listing_id'],
+                'assets':           listing['assets'],
+                'float':            listing['float'],
+                'pattern':          pattern_col,
+                'converted_price':  f"{listing['converted_min_price']}{csymbol} -> {listing['converted_price']}{csymbol} ({price_diff}%)",
+                'inspect_link':     listing['inspect_link'],
+                'buy_url':          listing['buy_url'],
+                'sync_at':          listing['sync_at'],
             })
 
         return rows

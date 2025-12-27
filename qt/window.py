@@ -11,6 +11,7 @@ from core.telegram import TelegramBotService
 from core.proxy import proxy_service
 from core.repositories import proxy_repository
 from qt.style import StyleManager
+from qt.widgets.nav import NavWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -35,6 +36,9 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         central_widget.setLayout(layout)
+
+        self.nav = NavWidget(self)
+        layout.addWidget(self.nav, stretch=1)
 
         self.mainWidget     = MainWidget()
         layout.addWidget(self.mainWidget, stretch=9)
@@ -104,4 +108,3 @@ class MainWindow(QMainWindow):
     # Add proxies to table
     def _setup_proxies(self):
         proxy_repository.upsert(proxy_service.proxies)
-        # applog.log_message.emit('Proxies added', 'info')

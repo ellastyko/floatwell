@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
 
 from .applogs import LogWidget
 from .tables import ItemsTableWidget, ProxiesTableWidget
-from .nav import NavWidget
 from qt.signals import ui
 
 class MainWidget(QWidget):
@@ -14,12 +13,9 @@ class MainWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.nav = NavWidget(self)
-        self.nav.setFixedHeight(48) 
         self.view_stack = QStackedLayout()
-
-        layout.addWidget(self.nav)
-        layout.addLayout(self.view_stack, stretch=10)
+        layout.addLayout(self.view_stack)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.market  = ItemsTableWidget()
         self.proxies = ProxiesTableWidget()  

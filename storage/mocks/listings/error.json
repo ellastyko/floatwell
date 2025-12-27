@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "start": 0,
+  "pagesize": 100,
+  "total_count": 0,
+  "results_html": "<div class=\"market_listing_table_header\">\n\t<div class=\"market_listing_price_listings_block\">\n\t\t<span class=\"market_listing_right_cell market_listing_action_buttons\"></span>\n\t\t<span class=\"market_listing_right_cell market_listing_their_price\">PRICE</span>\n\t</div>\n\t<div><span class=\"market_listing_header_namespacer\"></span>NAME</div>\n</div>\n",
+  "listinginfo": [],
+  "assets": [],
+  "currency": [],
+  "hovers": "",
+  "app_data": {
+    "730": {
+      "appid": 730,
+      "name": "Counter-Strike 2",
+      "icon": "https://cdn.fastly.steamstatic.com/steamcommunity/public/images/apps/730/8dbc71957312bbd3baea65848b545be9eae2a355.jpg",
+      "link": "https://steamcommunity.com/app/730"
+    }
+  }
+}

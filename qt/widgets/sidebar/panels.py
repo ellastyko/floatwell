@@ -8,11 +8,11 @@ from qt.controllers import parser
 from qt.widgets.components.bars import LoadingBar
 from utils.helpers import files_dict
 from configurator import config
-from core.source import source_manager
+from core.source.manager import source_manager
 from core.settings import settings_manager
 from utils.helpers import resource_path, load_json_resource
 
-class ProxiesPanel(QGroupBox):
+class PreviewPanel(QGroupBox):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout()
@@ -20,17 +20,15 @@ class ProxiesPanel(QGroupBox):
 
         self.setStyleSheet("""
             border-radius: 5px;
-            background-color: #303030;
             color: white;
         """)
 
         # Создаем заголовок
-        self.label_title = QLabel("Proxies")
+        self.label_title = QLabel("Preview")
         self.label_title.setAlignment(Qt.AlignCenter)
         self.label_title.setStyleSheet("""
             font-size: 14px;
             font-weight: bold;
-            background-color: #212121; 
             padding: 5px;
             margin-bottom: 10px;
         """)
@@ -39,7 +37,7 @@ class ProxiesPanel(QGroupBox):
 
         layout.addStretch()
 
-class ControlPanel(QGroupBox):
+class SettingsPanel(QGroupBox):
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout()
@@ -47,7 +45,6 @@ class ControlPanel(QGroupBox):
 
         self.setStyleSheet("""
             border-radius: 5px;
-            background-color: #303030;
             color: white;
         """)
         
@@ -58,20 +55,6 @@ class ControlPanel(QGroupBox):
         self.layout.addWidget(source_select)
         self.layout.addStretch(8)
 
-        self.setup_buttons()
-
-    
-    def setup_buttons(self):
-        self.run_btn = PushButton("Run parsing")
-        self.pause_btn = PushButton("Pause")
-
-        self.run_btn.clicked.connect(self.on_run)
-        self.pause_btn.clicked.connect(self.on_pause)
-        parser.stopped.connect(self.on_worker_finished)
-
-        self.layout.addWidget(self.run_btn)
-        self.layout.addWidget(self.pause_btn)
-    
     # Currency
     def setup_currency_select(self):
         container, combo = create_labeled_combobox("Currency:")
@@ -134,6 +117,31 @@ class ControlPanel(QGroupBox):
 
         source_manager.set_source(name, path)
     
+class ControlPanel(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.setStyleSheet("""
+            border-radius: 5px;
+            color: white;
+        """)
+
+        self.setup_buttons()
+
+    
+    def setup_buttons(self):
+        self.run_btn = PushButton("Run parsing")
+        self.pause_btn = PushButton("Pause")
+
+        self.run_btn.clicked.connect(self.on_run)
+        self.pause_btn.clicked.connect(self.on_pause)
+        parser.stopped.connect(self.on_worker_finished)
+
+        self.layout.addWidget(self.run_btn)
+        self.layout.addWidget(self.pause_btn)
+    
     # Control buttons
     def on_worker_finished(self):
         self.run_btn.setEnabled(True) 
@@ -147,6 +155,4 @@ class ControlPanel(QGroupBox):
         
     def on_pause(self):        
         parser.stop()
-
-
         

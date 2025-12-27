@@ -1,26 +1,19 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 from datetime import datetime
 
-from core.listings import ListingsParser, ListingAnalyzer
-from utils.helpers import load_json_resource
+from core.listings import ListingsParser
+from core.filters import ListingAnalyzer
 from utils.market import price_difference
 from configurator import config
 from core.repositories import ListingsRepository
 from core.repositories import proxy_repository
 from core.proxy import proxy_service
-from core.source import source_manager
+from core.source.manager import source_manager
 from core.settings import settings_manager
 from utils.logs import log
 from utils.market import match_rule
 from qt.signals import applog
-
-EXTERIORS = [
-    "Factory New",
-    "Minimal Wear",
-    "Field-Tested",
-    "Well-Worn",
-    "Battle-Scarred"
-]
+from core.strategies import STRATEGY_REGISTRY, StrategyContext
 
 class ListingWorker(QObject):
     finished = pyqtSignal()
@@ -37,19 +30,19 @@ class ListingWorker(QObject):
     # -------------------- public API --------------------
 
     def run(self):
-        try:
-            self._running = True
+        # try:
+        self._running = True
 
-            self._timer = QTimer()
-            self._timer.setSingleShot(True)
-            self._timer.timeout.connect(self._process_next_task)
+        self._timer = QTimer()
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._process_next_task)
 
-            self._setup()
-            self._build_tasks()
-            self._process_next_task()
-        except Exception as e:
-            log(e)
-            self.stop()
+        self._setup()
+        self._build_tasks()
+        self._process_next_task()
+        # except Exception as e:
+        #     log(e)
+        #     self.stop()
 
     def stop(self):
         self._running = False
@@ -61,30 +54,39 @@ class ListingWorker(QObject):
     def _setup(self):
         self.currency   = settings_manager.get('currency')
         self.repository = ListingsRepository()
-        self.listings   = ListingsParser()
-        self.analyzer   = ListingAnalyzer()
+        self.parser     = ListingsParser()
 
         if not source_manager.is_source_valid():
             raise Exception("Invalid source")
 
-        self.source_settings       = source_manager.get_settings()
-        self.source_filters        = source_manager.get_filters()
-        self.source_configurations = source_manager.get_configurations()
+        self.source_globals    = source_manager.get_globals()
+        self.source_strategies = source_manager.get_active_strategies()
+        self.source_assets     = source_manager.get_assets()
+        # Aliases is FN, exteriors is Factory New
+        self.exterior_aliases  = source_manager.get_exterior_aliases()
+        self.exteriors         = source_manager.get_exteriors()
+
+        self.analyzer = ListingAnalyzer(self.source_globals, self.source_assets)
+
 
     # -------------------- task queue --------------------
 
     def _build_tasks(self):
         self._tasks.clear()
 
-        for cname, config in self.source_configurations.items():
-            if not config.get('is_active', True):
+        for cname, config in self.source_assets.items():
+            if not config.get('enabled', True):
                 continue
 
-            if config.get('has_exteriors'):
-                for exterior in EXTERIORS:
-                    self._tasks.append((cname, config, exterior))
+            has_exteriors = config.get('has_exteriors', True)
+
+            if has_exteriors:
+                exterior_aliases = config.get('exteriors', self.exterior_aliases)
+                
+                for ext in exterior_aliases:
+                    self._tasks.append((cname, ext, 0, config.get('multipage', False))) 
             else:
-                self._tasks.append((cname, config, None))
+                self._tasks.append((cname, None, 0, config.get('multipage', False)))
 
     def _process_next_task(self):
         if not self._running:
@@ -95,10 +97,9 @@ class ListingWorker(QObject):
             QTimer.singleShot(self.ITERATION_DELAY, self._restart_iteration)
             return
 
-        cname, configuration, exterior = self._tasks.pop(0)
-        self.analyzer.set_configuration(configuration)
+        cname, exterior_alias, start, multipage = self._tasks.pop(0)
 
-        self._parse_single(cname, exterior)
+        self._parse_single(cname, exterior_alias, start, multipage)
 
     def _restart_iteration(self):
         if not self._running:
@@ -109,11 +110,15 @@ class ListingWorker(QObject):
 
     # -------------------- parsing --------------------
 
-    def _parse_single(self, item_name, exterior):
+
+    def _parse_single(self, item_name, exterior_alias: str|None, start: int, multipage: bool):
         if not self._running:
             return
 
-        hash_name = f"{item_name} ({exterior})" if exterior else item_name
+        # Преобразовываем exterior из FN в Factory New
+        suffix = self.exteriors[exterior_alias] if exterior_alias else None
+
+        hash_name = f"{item_name} {suffix}" if suffix else item_name
 
         proxy_ctx = proxy_service.acquire()
         if proxy_ctx is None:
@@ -122,7 +127,7 @@ class ListingWorker(QObject):
             return
 
         with proxy_ctx as proxy:
-            data, total_count = self.listings.get(hash_name, self.currency, proxy)
+            data, meta = self.parser.get(hash_name, self.currency, proxy, start)
 
             proxy_ctx.report(False) if data is None else proxy_ctx.report(True)
         
@@ -137,78 +142,47 @@ class ListingWorker(QObject):
         }])
 
         if data is None:
-            # retry без блокировки
+            self._tasks.insert(0, (item_name, exterior_alias, start, multipage))
             self._timer.start(self.RETRY_DELAY_MS)
             return
-
-        result = self._analyze_items(data, exterior)
+        
+        result = self._process_data(item_name, exterior_alias, data, meta)
 
         # Add items to repository
         self.repository.add(result)
+
+        if multipage and meta['has_more']:
+            self._tasks.append((item_name, exterior_alias, start + meta['per_page'], multipage))
 
         # задержка перед следующей задачей
         self._timer.start(self.REQUEST_DELAY_MS)
 
     # -------------------- analysis --------------------
 
-    def _analyze_items(self, data, exterior):
+    def _process_data(self, item_name, exterior, data, meta):
+        # Data analysis
+        analized = self.analyzer.apply(item_name, exterior, data)
+
         result = []
 
-        min_price = min(i.get('converted_price', float('inf')) for i in data)
+        strategies = [
+            STRATEGY_REGISTRY[name]()
+            for name in self.source_strategies
+            if name in STRATEGY_REGISTRY
+        ]
 
-        for item in data:
-            pattern_info = self.analyzer.get_pattern_info(item['pattern'], exterior)
-            float_info   = self.analyzer.get_float_info(item['float'], exterior)
-            diff         = price_difference(item['converted_price'], min_price)
-            score = 0
+        for item in analized['items']:
+            ctx = StrategyContext(item)
 
-            if 'pattern' in self.source_filters.keys() and pattern_info['is_rear'] and pattern_info['price_tolerance'] > diff:
-                score += 1
-            if 'float' in self.source_filters.keys() and float_info['is_rear']:
-                score += 1
-            if 'keychains' in self.source_filters.keys() and item['has_keychain']:
-                rules = self.source_filters['keychains'] 
-
-                for ast in item.get('assets', []):
-                    if ast.get("type") != "keychain":
-                        continue
-                    if 'like' in rules:
-                        if match_rule(ast.get('name', ''), rules['like']):
-                            score += 1
-                            break  # достаточно одного совпадения
-                        
-            if 'stickers' in self.source_filters.keys() and item['has_sticker']:
-                score += 1
-
-            if score < 1:
+            if not all(strategy.applies(ctx) for strategy in strategies):
                 continue
-            
-            # Через параметр tablepreview.assets можно настроить что будет выводиться в колонке assets
-            assets_categories = self.source_settings.get('tablepreview', {}).get('assets', ['stickers', 'keychains'])
-            
-            assets = []
-            if 'keychains' in assets_categories:
-                assets.extend([a for a in item['assets'] if a["type"] == "keychain"])
-            if 'stickers' in assets_categories:
-                assets.extend([a for a in item['assets'] if a["type"] == "sticker"])
 
-            result.append({
-                "name": item['name'],
-                "listing_id": item['listing_id'],
-                "assets": assets,
-                "buy_url": item['buy_url'],
-                "inspect_link": item['inspect_link'],
-                "pattern": pattern_info,
-                "float": float_info,
-                "currency": self.currency,
-                "diff": diff,
-                "converted_min_price": min_price,
-                "converted_price": item['converted_price'],
-                "sync_at": datetime.now().strftime("%H:%M:%S"),
-            })
+            cycle_data = {"currency": self.currency, "sync_at": datetime.now().strftime("%H:%M:%S"), 'converted_min_price': analized['converted_min_price']}
 
+            result.append({**item, **cycle_data})
+        
         applog.log_message.emit(
-            f"{data[0]['name']}; Parsed {len(data)} items, {len(result)} featured",
+            f"{analized['hash_name']}; Parsed {len(analized['items'])} items, {len(result)} featured (page {int(meta['page'])})",
             "info"
         )
 

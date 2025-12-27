@@ -5,7 +5,7 @@
     "name": "Ukrainian Hryvnia",
     "symbol": "₴"
   },
-  "source": "attachments.json",
+  "source": "rare.json",
   "synchronisations": {
     "request_interval": 12,
     "cycle_interval": 120,
