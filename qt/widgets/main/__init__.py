@@ -1,9 +1,10 @@
 from .base import MainWidget
-from .tables import ItemsTableWidget
-from ..nav import NavWidget
+from .tables import ItemsTableWidget, ProxiesTableWidget
+from .tabs.applogs import LogWidget
 
 __all__ = [
     'MainWidget',
     'ItemsTableWidget',
-    'NavWidget',
+    'ProxiesTableWidget',
+    'LogWidget',
 ]

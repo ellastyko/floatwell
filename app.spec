@@ -16,6 +16,8 @@ a = Analysis(
         ('assets/images/navigation/logs.svg', 'assets/images/navigation'),
         ('assets/images/navigation/proxies.svg', 'assets/images/navigation'),
         ('assets/images/navigation/listings.svg', 'assets/images/navigation'),
+        ('assets/images/navigation/steam.svg', 'assets/images/navigation'),
+        ('assets/images/navigation/settings.svg', 'assets/images/navigation'),
 
         ('sources/rare.json', 'sources'),
         ('sources/attachments.json', 'sources'),

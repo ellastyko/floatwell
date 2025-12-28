@@ -6,26 +6,18 @@ from qt.widgets.components.buttons import NavButton
 from utils.helpers import resource_path
 from qt.tools import colorize_icon
 
-class NavWidget(QWidget):
-    def __init__(self, main_widget):
+class NavbarWidget(QWidget):
+    def __init__(self):
         super().__init__()
-        self.main_widget = main_widget
         self._init_ui()
 
     def _init_ui(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(8, 40, 8, 8)  # увеличенный верхний отступ
         layout.setSpacing(15)  # расстояние между кнопками
-        # self.setAttribute(Qt.WA_StyledBackground, True)
-        # self.setStyleSheet("""
-        #     QWidget {
-        #         background-color: red;
-        #     }
-        # """)
 
         self.setFixedWidth(60)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-
         self.setLayout(layout)
 
         # Основные кнопки с иконками

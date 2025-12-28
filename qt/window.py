@@ -1,17 +1,17 @@
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QWidget, QDockWidget
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QSystemTrayIcon as QTI
 from PyQt5 import QtWidgets, QtGui, QtCore
 from configurator import config
-from qt.widgets.sidebar import SidebarDock
+from qt.widgets.sidebar import Sidebar
 from qt.widgets.main import MainWidget
-from qt.widgets.status import StatusBar
+from qt.widgets.statusbar import StatusBar
 from utils.helpers import resource_path
 from core.telegram import TelegramBotService
 from core.proxy import proxy_service
 from core.repositories import proxy_repository
 from qt.style import StyleManager
-from qt.widgets.nav import NavWidget
+from qt.widgets.navbar import NavbarWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -37,16 +37,16 @@ class MainWindow(QMainWindow):
         layout.setSpacing(0)
         central_widget.setLayout(layout)
 
-        self.nav = NavWidget(self)
+        # Set navigation bar
+        self.nav = NavbarWidget()
         layout.addWidget(self.nav, stretch=1)
 
+        # Set main widget
         self.mainWidget     = MainWidget()
         layout.addWidget(self.mainWidget, stretch=9)
 
-        self.dockw = SidebarDock('Controller', self)
-        self.dockw.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.dockw)
-        self.dockw.setContextMenuPolicy(Qt.PreventContextMenu)
+        self.sidebar = Sidebar()
+        layout.addWidget(self.sidebar, stretch=1)
 
         self._setup_proxies()
 
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         self.tray_menu.setStyleSheet(StyleManager.get_style("QMenu"))
 
         # Название приложения (disabled item)
-        title_action = QtWidgets.QAction("Float Flower", self.tray_menu)
+        title_action = QtWidgets.QAction(config['main']['appname'], self.tray_menu)
         title_action.setEnabled(False)
         self.tray_menu.addAction(title_action)
 
