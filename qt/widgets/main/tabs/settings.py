@@ -160,6 +160,8 @@ class TelegramSettingsSection(SettingsSection):
         )
 
         self.enable_cb = QCheckBox("Enable Telegram notifications")
+        self.enable_cb.setAttribute(Qt.WA_StyledBackground, True)
+        self.enable_cb.setStyleSheet('background-color: transparent;')
         self.content_layout.addWidget(self.enable_cb)
 
         # Поле для токена

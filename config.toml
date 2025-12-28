@@ -1,7 +1,7 @@
 [main]
 appname="Float Flower"
 icon="./assets/images/logo.jpg"
-version=0.6
+version=0.7
 
 [window]
 indent=[300,300]

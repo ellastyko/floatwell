@@ -90,17 +90,24 @@ class ListingsParser:
             return None, None
         
         # data = load_json_resource('./storage/snapshots/endpoint.json')
+        results = []
         total_count = data.get("total_count", 0)
 
+        meta = {
+            "total_count": total_count,
+            "start": start,
+            "per_page": per_page,
+            "has_more": (start + per_page) < total_count,
+            "page": (start / per_page) + 1
+        }
+
         if total_count == 0:
-            log_message = f"Listings not found for {hash_name}"
-            applog.log_message.emit(log_message, 'warning')
-            return None, None
+            log_message = f"Listings not found for {hash_name} | Please update your current config!"
+            applog.log_message.emit(log_message, 'error')
+            return results, meta
 
         listinginfo = data.get("listinginfo", None)
         assets = data.get("assets", {}).get("730", {}).get("2", None)
-
-        results = []
 
         for listing_id, listing in listinginfo.items():
             if not self.is_valid_listing(listing):
@@ -130,16 +137,6 @@ class ListingsParser:
                 'inspect_link':    self.get_inspect_link(listing),
                 "is_valid":        True,
             })
-
-        has_more = (start + per_page) < total_count
-
-        meta = {
-            "total_count": total_count,
-            "start": start,
-            "per_page": per_page,
-            "has_more": has_more,
-            "page": (start / per_page) + 1
-        }
 
         return results, meta
 

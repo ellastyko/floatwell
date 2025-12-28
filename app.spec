@@ -18,6 +18,8 @@ a = Analysis(
         ('assets/images/navigation/listings.svg', 'assets/images/navigation'),
         ('assets/images/navigation/steam.svg', 'assets/images/navigation'),
         ('assets/images/navigation/settings.svg', 'assets/images/navigation'),
+        ('assets/images/navigation/stop.svg', 'assets/images/navigation'),
+        ('assets/images/navigation/play.svg', 'assets/images/navigation'),
 
         ('sources/rare.json', 'sources'),
         ('sources/attachments.json', 'sources'),
@@ -60,5 +62,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Float Flower (v0.6)',  # Директория с exe
+    name='Float Flower (v0.7)',  # Директория с exe
 )

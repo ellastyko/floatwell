@@ -30,19 +30,19 @@ class ListingWorker(QObject):
     # -------------------- public API --------------------
 
     def run(self):
-        # try:
-        self._running = True
+        try:
+            self._running = True
 
-        self._timer = QTimer()
-        self._timer.setSingleShot(True)
-        self._timer.timeout.connect(self._process_next_task)
+            self._timer = QTimer()
+            self._timer.setSingleShot(True)
+            self._timer.timeout.connect(self._process_next_task)
 
-        self._setup()
-        self._build_tasks()
-        self._process_next_task()
-        # except Exception as e:
-        #     log(e)
-        #     self.stop()
+            self._setup()
+            self._build_tasks()
+            self._process_next_task()
+        except Exception as e:
+            log(e)
+            self.stop()
 
     def stop(self):
         self._running = False
@@ -141,13 +141,19 @@ class ListingWorker(QObject):
             'last_used_at': stats.last_used_at,
         }])
 
+        # Обработка запроса вызвавшего исключение
         if data is None:
             self._tasks.insert(0, (item_name, exterior_alias, start, multipage))
             self._timer.start(self.RETRY_DELAY_MS)
             return
         
-        result = self._process_data(item_name, exterior_alias, data, meta)
+        # Обработка запроса не вернувшего никаких предметов
+        if not data:
+            self._timer.start(self.RETRY_DELAY_MS)
+            return
 
+        # Data processing
+        result = self._process_data(item_name, exterior_alias, data, meta)
         # Add items to repository
         self.repository.add(result)
 
