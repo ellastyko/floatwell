@@ -2,15 +2,11 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QCheck
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel
 from .styles import *
-from qt.widgets.components.inputs import create_labeled_combobox
 from qt.widgets.components.buttons import PushButton
 from qt.controllers import parser
-from qt.widgets.components.bars import LoadingBar
-from utils.helpers import files_dict
-from configurator import config
-from core.source.manager import source_manager
-from core.settings import settings_manager
-from utils.helpers import resource_path, load_json_resource
+from qt.widgets.components.buttons import SidebarButton
+from utils.helpers import resource_path
+from qt.tools import colorize_icon
 
 class PreviewPanel(QGroupBox):
     def __init__(self):
@@ -37,103 +33,24 @@ class PreviewPanel(QGroupBox):
 
         layout.addStretch()
 
-class SettingsPanel(QGroupBox):
-    def __init__(self):
-        super().__init__()
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-
-        self.setStyleSheet("""
-            border-radius: 5px;
-            color: white;
-        """)
-        
-        currency_select = self.setup_currency_select()
-        source_select = self.setup_source_select()
-
-        self.layout.addWidget(currency_select)
-        self.layout.addWidget(source_select)
-        self.layout.addStretch(8)
-
-    # Currency
-    def setup_currency_select(self):
-        container, combo = create_labeled_combobox("Currency:")
-
-        currencies = load_json_resource(config['resources']['currencies'])
-
-        saved_currency = settings_manager.get('currency') # сохраненный source name
-
-        for currency in currencies:
-            combo.addItem(currency['name'], currency)
-        
-        # Если есть сохранённый source — выставляем его
-        if saved_currency:
-            index = combo.findText(saved_currency['name'])
-            if index != -1:
-                combo.setCurrentIndex(index)
-
-        combo.currentIndexChanged.connect(self.currency_changed)
-
-        return container
-
-    def currency_changed(self, index):
-        combo = self.sender()
-        data = combo.itemData(index)   
-
-        # Обновляем сохранённый выбор
-        settings_manager.set('currency', data)
-    
-    # Source
-    def setup_source_select(self):
-        container, combo = create_labeled_combobox("Source:")
-
-        sources = files_dict(resource_path(config['sources']['dir']))
-
-        saved_source = settings_manager.get('source') # сохраненный source name
-
-        for name, path in sources.items():
-            combo.addItem(name, path)
-        
-        # Если есть сохранённый source — выставляем его
-        if saved_source:
-            index = combo.findText(saved_source)
-            if index != -1:
-                combo.setCurrentIndex(index)
-                name = combo.itemText(index)
-                path = combo.itemData(index)
-                source_manager.set_source(name, path)
-
-        combo.currentIndexChanged.connect(self.source_changed)
-
-        return container
-    
-    def source_changed(self, index):
-        combo = self.sender()
-        name = combo.currentText()     # имя берём из текста
-        path = combo.itemData(index)   # путь берём из itemData
-
-        # Обновляем сохранённый выбор
-        settings_manager.set('source', name)
-
-        source_manager.set_source(name, path)
-    
 class ControlPanel(QWidget):
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-
-        self.setStyleSheet("""
-            border-radius: 5px;
-            color: white;
-        """)
-
+        self.layout.setContentsMargins(6, 6, 6, 6)
         self.setup_buttons()
 
-    
     def setup_buttons(self):
-        self.run_btn = PushButton("Run parsing")
-        self.pause_btn = PushButton("Pause")
+        start_icon = colorize_icon(resource_path("assets/images/navigation/play.svg"), '#3AC569')
+        stop_icon = colorize_icon(resource_path("assets/images/navigation/stop.svg"), '#FF5F57')
+
+        self.run_btn   = SidebarButton(icon=start_icon, tooltip="Start synchronization", label="Run parsing")
+        self.pause_btn = SidebarButton(icon=stop_icon, tooltip="Stop synchronization", label="Pause")
+        self.pause_btn.setDisabled(True)
+
+        self.run_btn.set_expanded(False)  # сжатый вид
+        self.pause_btn.set_expanded(False)  # сжатый вид
 
         self.run_btn.clicked.connect(self.on_run)
         self.pause_btn.clicked.connect(self.on_pause)

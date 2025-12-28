@@ -27,7 +27,7 @@ class NavbarWidget(QWidget):
             ("Logs",     colorize_icon(resource_path("assets/images/navigation/logs.svg"), '#fff'), lambda: ui.mode.emit('logs')),
             ("Proxies",  colorize_icon(resource_path("assets/images/navigation/proxies.svg"), '#fff'),  lambda: ui.mode.emit('proxies')),
             # ("Steam",  colorize_icon(resource_path("assets/images/navigation/steam.svg"), '#fff'),  lambda: ui.mode.emit('steam')),
-            # ("Settings",  colorize_icon(resource_path("assets/images/navigation/settings.svg"), '#fff'),  lambda: ui.mode.emit('settings')),
+            ("Settings",  colorize_icon(resource_path("assets/images/navigation/settings.svg"), '#fff'),  lambda: ui.mode.emit('settings')),
         ]
 
         self.mode_button_group = QButtonGroup(self)

@@ -25,7 +25,7 @@ class AssetsCellWidget(QWidget):
             label.setAlignment(Qt.AlignCenter)
 
             # placeholder
-            label.setStyleSheet("background:#2b2b2b;border-radius:4px;")
+            label.setStyleSheet("background:#2b2b2b; border-radius:4px;")
 
             self.labels[asset["image"]] = label
             layout.addWidget(label)
