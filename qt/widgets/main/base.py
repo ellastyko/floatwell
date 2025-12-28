@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
 
 from .applogs import LogWidget
-from .tables import ItemsTableWidget, ProxiesTableWidget
+from .tabs.listings import ListingsTabWidget
+from .tabs.proxies import ProxiesTabWidget
 from qt.signals import ui
 
 class MainWidget(QWidget):
@@ -17,8 +18,8 @@ class MainWidget(QWidget):
         layout.addLayout(self.view_stack)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        self.market  = ItemsTableWidget()
-        self.proxies = ProxiesTableWidget()  
+        self.market  = ListingsTabWidget()
+        self.proxies = ProxiesTabWidget()  
         self.logs    = LogWidget()
 
         self.view_stack.addWidget(self.market)

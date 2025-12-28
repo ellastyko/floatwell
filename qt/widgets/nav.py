@@ -15,7 +15,7 @@ class NavWidget(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(8, 40, 8, 8)  # увеличенный верхний отступ
-        layout.setSpacing(10)  # расстояние между кнопками
+        layout.setSpacing(15)  # расстояние между кнопками
         # self.setAttribute(Qt.WA_StyledBackground, True)
         # self.setStyleSheet("""
         #     QWidget {
@@ -34,7 +34,8 @@ class NavWidget(QWidget):
             ("Listings", colorize_icon(resource_path("assets/images/navigation/listings.svg"), '#fff'), lambda: ui.mode.emit('listings')),
             ("Logs",     colorize_icon(resource_path("assets/images/navigation/logs.svg"), '#fff'), lambda: ui.mode.emit('logs')),
             ("Proxies",  colorize_icon(resource_path("assets/images/navigation/proxies.svg"), '#fff'),  lambda: ui.mode.emit('proxies')),
-            # ("Autobuy",  colorize_icon(resource_path("assets/images/navigation/listings.svg"), '#fff'),  lambda: ui.mode.emit('autobuy')),
+            # ("Steam",  colorize_icon(resource_path("assets/images/navigation/steam.svg"), '#fff'),  lambda: ui.mode.emit('steam')),
+            # ("Settings",  colorize_icon(resource_path("assets/images/navigation/settings.svg"), '#fff'),  lambda: ui.mode.emit('settings')),
         ]
 
         self.mode_button_group = QButtonGroup(self)

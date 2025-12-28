@@ -12,23 +12,12 @@ class ItemsTableWidget(QWidget):
     def __init__(self):
         super().__init__()
         self._init_ui()
-        # self._setup_style()
         table_dispatcher.items_table.connect(self.add_rows)
-    
-    # def _setup_style(self):
-    #     self.setStyleSheet("""
-    #         QWidget {
-    #             background-color: #1e1e1e;
-    #             color: #d4d4d4;
-    #             border: 1px solid #444;
-    #             selection-background-color: #264f78;
-    #         }
-    #     """)
 
     def _init_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # layout.setContentsMargins(0, 0, 0, 0)
         self.table_widget = QTableWidget(0, 9)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
         self.table_widget.setHorizontalHeaderLabels(
@@ -40,7 +29,6 @@ class ItemsTableWidget(QWidget):
         # Настроим размеры колонок
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # Name
         header.setSectionResizeMode(1, QHeaderView.Stretch)  # Assets
-        # header.setMaximumSectionSize(300) 
         header.setSectionResizeMode(2, QHeaderView.Stretch)  # Price
 
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Float
@@ -129,6 +117,7 @@ class ProxiesTableWidget(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
+        self.setLayout(layout)
 
         self.table = QTableWidget(0, 7)
         self.table.setStyleSheet(StyleManager.get_style("QTable"))
@@ -147,10 +136,7 @@ class ProxiesTableWidget(QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
 
-        box = QGroupBox(" Proxies ")
-        box_layout = QVBoxLayout(box)
-        box_layout.addWidget(self.table)
-        layout.addWidget(box)
+        layout.addWidget(self.table)
 
     # ---------------- Public API ---------------- #
 

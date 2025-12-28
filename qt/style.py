@@ -224,6 +224,40 @@ class StyleManager:
                     background: none;
                 }
         """,
+        "QLogWidget": """
+            LogWidget {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                border: 1px solid #444;
+                selection-background-color: #264f78;
+            }
+
+            QScrollBar:vertical {
+                    background: #1e1e1e;
+                    width: 10px;
+                    margin: 0;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #3a3a3a;
+                min-height: 20px;
+                border-radius: 4px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #4a4a4a;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: none;
+            }
+        """,
         "QMenu": """
             QMenu {
                 background-color: #2B2B2B;

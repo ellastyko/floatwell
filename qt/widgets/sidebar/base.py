@@ -9,8 +9,8 @@ from qt.style import StyleManager
 class SidebarDock(QDockWidget):
     def __init__(self, title, parent=None):
         super().__init__(title, parent)
-        self.setMinimumWidth(300)
-        self.setMaximumWidth(450)
+        self.setMinimumWidth(200)
+        self.setMaximumWidth(250)
         
         # Основные настройки стиля
         self.setStyleSheet(StyleManager.get_style("QDockWidget"))

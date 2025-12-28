@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtGui import QTextCursor, QFont
 from PyQt5.QtCore import Qt, QDateTime, pyqtSlot
 from qt.signals import applog
+from qt.style import StyleManager
 
 class LogWidget(QTextEdit):
     def __init__(self, parent=None):
@@ -25,14 +26,7 @@ class LogWidget(QTextEdit):
         self.customContextMenuRequested.connect(self._show_context_menu)
         
     def _setup_style(self):
-        self.setStyleSheet("""
-            LogWidget {
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                border: 1px solid #444;
-                selection-background-color: #264f78;
-            }
-        """)
+        self.setStyleSheet(StyleManager.get_style("QLogWidget"))
     
     @pyqtSlot(str, str)
     def _append_log_message(self, message, level="info"):
@@ -75,10 +69,10 @@ class LogWidget(QTextEdit):
     def _show_context_menu(self, position):
         menu = self.createStandardContextMenu()
         
-        clear_action = menu.addAction("Очистить логи")
+        clear_action = menu.addAction("Clean logs")
         clear_action.triggered.connect(self.clear_logs)
         
-        copy_action = menu.addAction("Копировать все")
+        copy_action = menu.addAction("Copy all")
         copy_action.triggered.connect(self._copy_all)
         
         menu.exec_(self.viewport().mapToGlobal(position))
