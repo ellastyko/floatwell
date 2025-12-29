@@ -6,6 +6,16 @@ def price_difference(current_price: float, min_price: float):
         return 0  # защита от деления на ноль
     return (current_price - min_price) / min_price
 
+
+from babel.numbers import format_currency
+
+def format_price(amount: float, currency_code: str, locale: str = "en_US") -> str:
+    try:
+        return format_currency(amount, currency_code.upper(), locale=locale)
+    except Exception as e:
+        # fallback
+        return f"{currency_code.upper()} {amount:.2f}"
+
 def match_rule(value: str, rule: str) -> bool:
     """
     Поддержка wildcard:

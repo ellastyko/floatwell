@@ -7,13 +7,6 @@ class AppLogDispatcher(QObject):
     log_message = pyqtSignal(str, str)
     clear_logs  = pyqtSignal()
 
-class ItemsTableDispatcher(QObject):
-    items_table   = pyqtSignal(list)
-    proxies_table_insert = pyqtSignal(list)
-    proxies_table_update = pyqtSignal(list)
-
-table_dispatcher = ItemsTableDispatcher()
-
 # Глобальный синглтон
 ui          = UIController()
 applog      = AppLogDispatcher()

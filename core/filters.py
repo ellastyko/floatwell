@@ -26,6 +26,7 @@ class ListingAnalyzer:
         result = []
         # Count min price of items batch
         converted_min_price = (min(i.get('converted_price', float('inf')) for i in items) if items else None)
+        short_hash_name = f"{name} ({exterior})" if exterior else name
 
         for item in items: 
             assets    = item.get('assets', [])
@@ -46,6 +47,7 @@ class ListingAnalyzer:
 
             result.append({
                 'hash_name':        item['hash_name'],
+                'short_hash_name':  short_hash_name,
                 'name':             item['name'],
                 'image':            item['image'],
                 'exterior':         exterior,
@@ -75,7 +77,7 @@ class ListingAnalyzer:
         return {
             "items":               result,
             "name":                name,
-            "hash_name":           f"{name} ({exterior})" if exterior else name,
+            "short_hash_name":     short_hash_name,
             "converted_min_price": converted_min_price,
         }
     

@@ -5,7 +5,9 @@ from PyQt5 import QtGui
 from utils.helpers import resource_path
 from utils.logs import log
 from configurator import config
+from core.notifications import NotificationSubscribtionService
 
+subscription_service = NotificationSubscribtionService()
 # # -------------------------------
 # # Создаём папку для логов
 # logs_path = os.path.join(os.path.abspath("."), "storage", "logs")

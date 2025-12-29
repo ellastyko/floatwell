@@ -1,98 +1,111 @@
-from PyQt5.QtWidgets import (QWidget, QTableWidget, QHeaderView, QGroupBox, QVBoxLayout, QTableWidgetItem, QPushButton)
-from PyQt5.QtCore import QObject, pyqtSignal, Qt
-import webbrowser
+from PyQt5.QtWidgets import (QWidget, QTableWidget, QHeaderView, QVBoxLayout, QTableWidgetItem)
+from PyQt5.QtCore import Qt, QPoint
 from qt.style import StyleManager
 from PyQt5.QtGui import QColor
-from qt.signals import table_dispatcher
 from qt.widgets.components.cells import AssetsCellWidget, ItemCellWidget
-from qt.widgets.components.buttons import PushButton
+from qt.widgets.components.cards import ItemFloatingPreview
+from core.repositories import listings_repository, proxy_repository
+from utils.market import format_price
 
 # Items table
 class ItemsTableWidget(QWidget):
     def __init__(self):
         super().__init__()
         self._init_ui()
-        table_dispatcher.items_table.connect(self.add_rows)
+
+        listings_repository.added.connect(self.add_rows)
 
     def _init_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
-        # layout.setContentsMargins(0, 0, 0, 0)
-        self.table_widget = QTableWidget(0, 9)
+        self.table_widget = QTableWidget(0, 6)
         self.table_widget.setStyleSheet(StyleManager.get_style("QTable"))
-        self.table_widget.setHorizontalHeaderLabels(
-            ["Name", "Assets", "Price", "Float", "Pattern", "Sync At", "Inspect", "Steam", "Actions"]
-        )
+        self.table_widget.setHorizontalHeaderLabels(["Name", "Assets", "Price", "Float", "Pattern", "Sync At"])
 
         header = self.table_widget.horizontalHeader()
 
         # Настроим размеры колонок
         header.setSectionResizeMode(0, QHeaderView.Stretch)  # Name
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Assets
-        header.setSectionResizeMode(2, QHeaderView.Stretch)  # Price
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Assets
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Price
 
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Float
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Pattern
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Sync At
-        header.setSectionResizeMode(6, QHeaderView.Fixed)  # Inspect (кнопка)
-        header.setSectionResizeMode(7, QHeaderView.Fixed)  # Buy (кнопка)
-        header.setSectionResizeMode(8, QHeaderView.Fixed)
 
         self.table_widget.setColumnWidth(5, 120)  # меньше, чем растягиваемые колонки
         # Фиксируем ширину для кнопок и Sync At
-        self.table_widget.setColumnWidth(6, 80)
-        self.table_widget.setColumnWidth(7, 80)
-        self.table_widget.setColumnWidth(8, 80)
-
-        # table_layout = QVBoxLayout()
-        # table_layout.addWidget(self.table_widget)
+        self.table_widget.setColumnWidth(6, 96)
         layout.addWidget(self.table_widget)
-    
-    def add_rows(self, items):
+
+        # ---------- Preview ----------
+        self.preview = ItemFloatingPreview(self)
+
+        # ---------- Signals ----------
+        self.table_widget.cellClicked.connect(self.show_preview)
+        self.table_widget.verticalScrollBar().valueChanged.connect(
+            self.preview.animated_hide
+        )
+        self.table_widget.horizontalScrollBar().valueChanged.connect(
+            self.preview.animated_hide
+        )
+
+    def add_rows(self, items: list[dict]):
         for item in items:
-            self.table_widget.insertRow(0)
-            
-            # Старая версия
-            # name_item = QTableWidgetItem(item["name"])
-            # name_item.setData(Qt.UserRole, item["listing_id"])  # храним уникальный ID
-            # self.table_widget.setItem(0, 0, name_item)
+            self._add_row(item)
 
-            item_name_cell = ItemCellWidget(item["image"], item["name"])
-            self.table_widget.setCellWidget(0, 0, item_name_cell)
-            # Assets
-            assets_widget = AssetsCellWidget(item["assets"])
-            self.table_widget.setCellWidget(0, 1, assets_widget)
-            self.table_widget.setRowHeight(0, 45)
-            self.table_widget.setItem(0, 2, QTableWidgetItem(str(item["converted_price"])))
-            self.table_widget.setItem(0, 3, QTableWidgetItem(str(item["float"])))
-            self.table_widget.setItem(0, 4, QTableWidgetItem(str(item["pattern"])))
-            self.table_widget.setItem(0, 5, QTableWidgetItem(str(item["sync_at"])))
+    def _add_row(self, item: dict):
+        row = 0
+        self.table_widget.insertRow(row)
 
-            inspect_button = PushButton("Inspect")
-            inspect_button.setCursor(Qt.PointingHandCursor)
-            inspect_button.clicked.connect(lambda _, url=item["inspect_link"]: webbrowser.open(url))
-            self.table_widget.setCellWidget(0, 6, inspect_button)
+        # 🔑 META ITEM (привязка данных к строке)
+        meta_item = QTableWidgetItem()
+        meta_item.setData(Qt.UserRole, item)
+        self.table_widget.setItem(row, 0, meta_item)
 
-            buy_button = PushButton("Buy")
-            buy_button.setCursor(Qt.PointingHandCursor)
-            buy_button.clicked.connect(lambda _, url=item["buy_url"]: webbrowser.open(url))
-            self.table_widget.setCellWidget(0, 7, buy_button)
+        # Name
+        self.table_widget.setCellWidget(
+            row, 0,
+            ItemCellWidget(item["image"], item["name"])
+        )
 
-             # Remove — ★ new ★
-            remove_button = PushButton("Remove")
-            remove_button.setCursor(Qt.PointingHandCursor)
-            remove_button.clicked.connect(
-                lambda _, btn=remove_button: self.remove_row(btn)
-            )
-            self.table_widget.setCellWidget(0, 8, remove_button)
-            
-            # ---- Подсветка строки, если нужно ----
-            # if item['is_highlighted']:
-            #     for col in range(self.table_widget.columnCount()):
-            #         cell_item = self.table_widget.item(row, col)
-            #         if cell_item:
-            #             cell_item.setBackground(QColor("#25A550"))  # светло-жёлтая подсветка
-            #             cell_item.setForeground(QColor("#000000"))  # черный текст
+        # Assets
+        self.table_widget.setCellWidget(
+            row, 1,
+            AssetsCellWidget(item["assets"])
+        )
+
+        self.table_widget.setRowHeight(row, 46)
+
+        self.table_widget.setItem(row, 2, QTableWidgetItem(
+            f"{format_price(item["converted_price"], item["currency"]['code'], 'uk_UA')} ({item['pricediff'] * 100:.1f}%)"
+        ))
+        self.table_widget.setItem(row, 3, QTableWidgetItem(
+            f"{item['float']:.5f}"
+        ))
+
+        # print(item.get('has_rare_pattern'), item['pattern'], item['patterninfo'])
+        
+        self.table_widget.setItem(row, 4, QTableWidgetItem(
+            str(f"{item['pattern']} ({item['patterninfo']['rank']})" if item.get('has_rare_pattern') else item['pattern'])
+        ))
+        self.table_widget.setItem(row, 5, QTableWidgetItem(
+            str(item["sync_at"])
+        ))
+
+    def show_preview(self, row, col):
+        item = self.table_widget.item(row, 0)
+        if not item:
+            return
+
+        data = item.data(Qt.UserRole)
+        if not data:
+            return
+        
+        rect = self.table_widget.visualItemRect(self.table_widget.item(row, col))
+        global_pos = self.table_widget.viewport().mapToGlobal(rect.topRight())
+        self.preview.show_data(data, global_pos + QPoint(10, 0))
+
         
     def remove_row(self, button):
         index = self.table_widget.indexAt(button.pos())
@@ -110,8 +123,8 @@ class ProxiesTableWidget(QWidget):
         self._row_by_key: dict[str, int] = {}
         self._init_ui()
 
-        table_dispatcher.proxies_table_insert.connect(self.insert_rows)
-        table_dispatcher.proxies_table_update.connect(self.update_rows)
+        proxy_repository.added.connect(self.insert_rows)
+        proxy_repository.updated.connect(self.update_rows)
 
     # ---------------- UI ---------------- #
 
@@ -122,9 +135,7 @@ class ProxiesTableWidget(QWidget):
         self.table = QTableWidget(0, 7)
         self.table.setStyleSheet(StyleManager.get_style("QTable"))
         self.table.setHorizontalHeaderLabels([
-            "IP", "Port", 
-            "Username", "Password",
-            "Success rate", "Total Requests", "Last used at"
+            "IP", "Port", "Username", "Password", "Success rate", "Total Requests", "Last used at"
         ])
 
         header = self.table.horizontalHeader()

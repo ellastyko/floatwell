@@ -1,17 +1,12 @@
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 from datetime import datetime
-
 from core.listings import ListingsParser
 from core.filters import ListingAnalyzer
-from utils.market import price_difference
-from configurator import config
-from core.repositories import ListingsRepository
-from core.repositories import proxy_repository
+from core.repositories import listings_repository, proxy_repository
 from core.proxy import proxy_service
 from core.source.manager import source_manager
 from core.settings import settings_manager
 from utils.logs import log
-from utils.market import match_rule
 from qt.signals import applog
 from core.strategies import STRATEGY_REGISTRY, StrategyContext
 
@@ -53,7 +48,6 @@ class ListingWorker(QObject):
 
     def _setup(self):
         self.currency   = settings_manager.get('currency')
-        self.repository = ListingsRepository()
         self.parser     = ListingsParser()
 
         if not source_manager.is_source_valid():
@@ -154,8 +148,9 @@ class ListingWorker(QObject):
 
         # Data processing
         result = self._process_data(item_name, exterior_alias, data, meta)
+
         # Add items to repository
-        self.repository.add(result)
+        listings_repository.upsert(result)
 
         if multipage and meta['has_more']:
             self._tasks.append((item_name, exterior_alias, start + meta['per_page'], multipage))
@@ -188,7 +183,7 @@ class ListingWorker(QObject):
             result.append({**item, **cycle_data})
         
         applog.log_message.emit(
-            f"{analized['hash_name']}; Parsed {len(analized['items'])} items, {len(result)} featured (page {int(meta['page'])})",
+            f"{analized['short_hash_name']}; Parsed {len(analized['items'])} items, {len(result)} featured (page {int(meta['page'])})",
             "info"
         )
 
