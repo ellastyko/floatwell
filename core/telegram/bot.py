@@ -3,7 +3,6 @@ import threading
 import queue
 from dataclasses import dataclass
 from typing import Iterable, Optional, Dict, Any
-
 from telegram import Bot
 from telegram.error import TelegramError
 
@@ -53,6 +52,7 @@ class TelegramBotService:
 
     def notify(self, text: str, level: str = "info", meta: dict | None = None):
         """Main entry point from PyQt code"""
+        print('notification')
         self._queue.put(BotEvent(level=level, text=text, meta=meta))
 
     def info(self, text: str):
@@ -98,12 +98,15 @@ class TelegramBotService:
 
             for chat_id in self.whitelist:
                 try:
-                    await self.bot.send_message(
+                    res = await self.bot.send_message(
                         chat_id=chat_id,
                         text=message
                     )
-                except TelegramError:
+                    print(res)
+
+                except TelegramError as e:
                     # Telegram may be unavailable — ignore by design
+                    print(e)
                     pass
 
     @staticmethod
@@ -121,7 +124,9 @@ class TelegramBotService:
                 msg += f"\n• {k}: {v}"
         return msg
 
+from core.settings import settings_manager
 
-# ---------------- Example integration ----------------
-# Call ONCE on app startup (e.g. in main.py)
-
+bot = TelegramBotService(
+    token=settings_manager.get('telegram.BOT_TOKEN'),
+    whitelist_chat_ids=settings_manager.get('telegram.CHAT_IDS'),
+)

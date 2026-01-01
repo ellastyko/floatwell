@@ -1,14 +1,13 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout)
-from PyQt5.QtCore import QObject, pyqtSignal, Qt
-from qt.style import StyleManager
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
 from utils.helpers import load_json_resource
 from qt.widgets.components.inputs import create_labeled_combobox
 from qt.widgets.components.buttons import PushButton
 from core.settings import settings_manager
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QGroupBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox
 from configurator import config
-from qt.widgets.components.inputs import TelegramTokenInput
+from qt.widgets.components.inputs import TelegramTokenInput, TelegramChatIdsInput
 from utils.helpers import files_dict
 from configurator import config
 from core.source.manager import source_manager
@@ -30,6 +29,7 @@ class SettingsTabWidget(QWidget):
         self.setStyleSheet("""
             #SettingsTab {
                 background-color: #1e1e1e;
+                border: 1px solid #444;
                 color: #f8faff;
             }
         """)
@@ -159,14 +159,19 @@ class TelegramSettingsSection(SettingsSection):
             "Receive important events directly in Telegram"
         )
 
-        self.enable_cb = QCheckBox("Enable Telegram notifications")
-        self.enable_cb.setAttribute(Qt.WA_StyledBackground, True)
-        self.enable_cb.setStyleSheet('background-color: transparent;')
-        self.content_layout.addWidget(self.enable_cb)
+        # self.enable_cb = QCheckBox("Enable Telegram notifications")
+        # self.enable_cb.setAttribute(Qt.WA_StyledBackground, True)
+        # self.enable_cb.setStyleSheet('background-color: transparent;')
+        # self.content_layout.addWidget(self.enable_cb)
 
         # Поле для токена
         self.token_field = TelegramTokenInput()
+
+        self.chat_ids_field = TelegramChatIdsInput()
+
         self.content_layout.addWidget(self.token_field)
+        self.content_layout.addWidget(self.chat_ids_field)
+
 
 class AdvancedSettingsSection(SettingsSection):
     def __init__(self):

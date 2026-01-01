@@ -1,8 +1,8 @@
 from .base import Sidebar
-from .panels import PreviewPanel, ControlPanel
+from .panels import NotificationsPanel, ControlPanel
 
 __all__ = [
     'Sidebar',
     'ControlPanel',
-    'PreviewPanel'
+    'NotificationsPanel'
 ]

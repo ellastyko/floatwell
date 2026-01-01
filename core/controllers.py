@@ -1,7 +1,8 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import QObject, pyqtSignal
-from qt.workers import ListingWorker
+from core.workers import ListingWorker
 from qt.signals import applog
+from core.notifications.notifier import notification_queue
 
 class ParserController(QObject):
     stopped  = pyqtSignal()
@@ -24,6 +25,7 @@ class ParserController(QObject):
     
     def stop(self):
         # print('controller stop')
+        notification_queue.clear()
         self.worker.stop()  # сигнал воркеру завершиться
 
     def on_worker_finished(self):

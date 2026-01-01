@@ -7,7 +7,6 @@ from qt.widgets.sidebar import Sidebar
 from qt.widgets.main import MainWidget
 from qt.widgets.statusbar import StatusBar
 from utils.helpers import resource_path
-from core.telegram import TelegramBotService
 from core.proxy import proxy_service
 from core.repositories import proxy_repository
 from qt.style import StyleManager

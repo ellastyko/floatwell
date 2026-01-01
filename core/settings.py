@@ -35,7 +35,6 @@ class SettingsManager(QObject):
             
         except Exception as e:
             error_msg = f"Ошибка загрузки настроек: {str(e)}"
-            print(error_msg)
             self._settings = {}  # Сбрасываем к пустому словарю
             self.settings_loaded.emit(False)
             self.settings_error.emit(error_msg)
@@ -99,7 +98,6 @@ class SettingsManager(QObject):
             
             if success:
                 self.settings_updated.emit()
-                print(f"Настройки сохранены в {self._settings_path}")
             
             return success
             

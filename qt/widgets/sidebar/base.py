@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from .panels import PreviewPanel, ControlPanel
+from .panels import ControlPanel, NotificationsPanel
 from PyQt5.QtWidgets import (QDockWidget, QToolBox, QWidget, QVBoxLayout, QLabel, QPushButton)
 from PyQt5.QtCore import Qt
 from qt.widgets.components.buttons import PushButton
@@ -20,10 +20,12 @@ class Sidebar(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(6)
 
-        self.layout.addStretch()
 
         # --- Control panel всегда снизу ---
+        self.notifications_panel = NotificationsPanel()
         self.control_panel = ControlPanel()
+        self.layout.addWidget(self.notifications_panel)
+        self.layout.addStretch()
         self.layout.addWidget(self.control_panel)
 
     def toggle(self):

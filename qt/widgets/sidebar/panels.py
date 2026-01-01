@@ -1,56 +1,62 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QGroupBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGroupBox
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel
-from .styles import *
-from qt.widgets.components.buttons import PushButton
-from qt.controllers import parser
+from core.controllers import parser
 from qt.widgets.components.buttons import SidebarButton
 from utils.helpers import resource_path
 from qt.tools import colorize_icon
+from core.telegram.bot import bot
+from core.settings import settings_manager
 
-class PreviewPanel(QGroupBox):
+class NotificationsPanel(QWidget):
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(6, 20, 6, 20)
+        self.setup_buttons()
 
-        self.setStyleSheet("""
-            border-radius: 5px;
-            color: white;
-        """)
+    def setup_buttons(self):
+        start_icon = resource_path("assets/images/navigation/windows.svg")
+        stop_icon = resource_path("assets/images/navigation/telegram.svg")
 
-        # Создаем заголовок
-        self.label_title = QLabel("Preview")
-        self.label_title.setAlignment(Qt.AlignCenter)
-        self.label_title.setStyleSheet("""
-            font-size: 14px;
-            font-weight: bold;
-            padding: 5px;
-            margin-bottom: 10px;
-        """)
+        self.run_btn   = SidebarButton(icon_path=start_icon, tooltip="Enable desktop notifications")
+        self.pause_btn = SidebarButton(icon_path=stop_icon, tooltip="Enable telegram notifications")
+        self.pause_btn.setDisabled(True)
 
-        layout.addWidget(self.label_title)
+        self.run_btn.clicked.connect(self.enable_desktop_notifications)
+        self.pause_btn.clicked.connect(self.enable_telegram_notifications)
 
-        layout.addStretch()
+        self.layout.addWidget(self.run_btn)
+        self.layout.addWidget(self.pause_btn)
+
+    def enable_desktop_notifications(self):
+        settings_manager.get('notifications.telegram')
+
+    def enable_telegram_notifications(self):
+        is_enabled = settings_manager.get('notifications.telegram', False)
+
+        if is_enabled:
+            bot.stop()
+            settings_manager.set('notifications.telegram', False)
+        else:
+            settings_manager.set('notifications.telegram', True)
+            bot.start()
 
 class ControlPanel(QWidget):
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self.layout.setContentsMargins(6, 6, 6, 6)
+        self.layout.setContentsMargins(6, 20, 6, 20)
         self.setup_buttons()
 
     def setup_buttons(self):
         start_icon = colorize_icon(resource_path("assets/images/navigation/play.svg"), '#3AC569')
         stop_icon = colorize_icon(resource_path("assets/images/navigation/stop.svg"), '#FF5F57')
 
-        self.run_btn   = SidebarButton(icon=start_icon, tooltip="Start synchronization", label="Run parsing")
-        self.pause_btn = SidebarButton(icon=stop_icon, tooltip="Stop synchronization", label="Pause")
+        self.run_btn   = SidebarButton(icon_path=start_icon, tooltip="Start synchronization")
+        self.pause_btn = SidebarButton(icon_path=stop_icon, tooltip="Stop synchronization")
         self.pause_btn.setDisabled(True)
-
-        self.run_btn.set_expanded(False)  # сжатый вид
-        self.pause_btn.set_expanded(False)  # сжатый вид
 
         self.run_btn.clicked.connect(self.on_run)
         self.pause_btn.clicked.connect(self.on_pause)
@@ -70,6 +76,10 @@ class ControlPanel(QWidget):
 
         parser.start()  # запускаем парсер
         
-    def on_pause(self):        
+    def on_pause(self): 
+        from PyQt5.QtWidgets import QApplication
+
+        self.pause_btn.setDisabled(True)
+        QApplication.processEvents()
         parser.stop()
         

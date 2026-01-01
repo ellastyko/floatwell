@@ -5,14 +5,9 @@ from PyQt5 import QtGui
 from utils.helpers import resource_path
 from utils.logs import log
 from configurator import config
-from core.notifications import NotificationSubscribtionService
+from core.provider import AppServiceProvider
 
-subscription_service = NotificationSubscribtionService()
-# # -------------------------------
-# # Создаём папку для логов
-# logs_path = os.path.join(os.path.abspath("."), "storage", "logs")
-# os.makedirs(logs_path, exist_ok=True)
-# # -------------------------------
+AppServiceProvider()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -20,4 +15,3 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-    

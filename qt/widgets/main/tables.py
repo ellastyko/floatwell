@@ -66,7 +66,7 @@ class ItemsTableWidget(QWidget):
         # Name
         self.table_widget.setCellWidget(
             row, 0,
-            ItemCellWidget(item["image"], item["name"])
+            ItemCellWidget(item["image"], item["short_hash_name"])
         )
 
         # Assets

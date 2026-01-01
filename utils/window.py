@@ -1,4 +1,3 @@
-# utils/window.py
 from PyQt5.QtCore import QObject, pyqtSignal
 import win32gui, win32con, win32process, os
 
