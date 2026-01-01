@@ -2,7 +2,7 @@ from PyQt5.QtCore import QObject
 from core.repositories import listings_repository
 from core.notifications.notifier import notification_queue
 from core.settings import settings_manager
-from core.telegram.bot import bot
+# from core.telegram.bot import bot
 
 class ListingsNotificationSubscriber(QObject):
     def __init__(self):
@@ -20,8 +20,8 @@ class ListingsNotificationSubscriber(QObject):
                 message=f"Listings added ({count})",
             )
 
-        if settings_manager.get('notifications.telegram', False):
-            count = len(items)
-            first = items[0]['hash_name']
+        # if settings_manager.get('notifications.telegram', False):
+        #     count = len(items)
+        #     first = items[0]['hash_name']
 
-            bot.notify(f"Listings added ({count})")
+        #     bot.notify(f"Listings added ({count})")

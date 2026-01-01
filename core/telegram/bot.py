@@ -104,9 +104,8 @@ class TelegramBotService:
                     )
                     print(res)
 
-                except TelegramError as e:
+                except TelegramError:
                     # Telegram may be unavailable — ignore by design
-                    print(e)
                     pass
 
     @staticmethod
@@ -126,7 +125,4 @@ class TelegramBotService:
 
 from core.settings import settings_manager
 
-bot = TelegramBotService(
-    token=settings_manager.get('telegram.BOT_TOKEN'),
-    whitelist_chat_ids=settings_manager.get('telegram.CHAT_IDS'),
-)
+bot = TelegramBotService(token=settings_manager.get('telegram.BOT_TOKEN'))

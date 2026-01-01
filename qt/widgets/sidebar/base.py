@@ -20,7 +20,6 @@ class Sidebar(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(6)
 
-
         # --- Control panel всегда снизу ---
         self.notifications_panel = NotificationsPanel()
         self.control_panel = ControlPanel()
@@ -38,6 +37,3 @@ class Sidebar(QWidget):
         self.anim.setStartValue(start)
         self.anim.setEndValue(end)
         self.anim.start()
-
-        # Прячем контент при схлопывании
-        self.settings_panel.setVisible(self.expanded)

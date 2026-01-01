@@ -23,7 +23,7 @@ class NavbarWidget(QWidget):
             ("Listings", resource_path("assets/images/navigation/listings.svg"), lambda: ui.mode.emit('listings')),
             ("Logs",     resource_path("assets/images/navigation/logs.svg"), lambda: ui.mode.emit('logs')),
             ("Proxies",  resource_path("assets/images/navigation/proxies.svg"),  lambda: ui.mode.emit('proxies')),
-            ("Steam",  resource_path("assets/images/navigation/steam.svg"),  lambda: ui.mode.emit('steam')),
+            # ("Steam",  resource_path("assets/images/navigation/steam.svg"),  lambda: ui.mode.emit('steam')),
         ]
 
         bottombuttons = [

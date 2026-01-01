@@ -192,7 +192,9 @@ class AdvancedSettingsSection(SettingsSection):
 
         attach = PushButton("Attach maFile")
         remove = PushButton("Remove maFile")
-
+        
+        attach.setDisabled(True)
+        remove.setDisabled(True)
         attach.setFixedWidth(160)
         remove.setFixedWidth(160)
 

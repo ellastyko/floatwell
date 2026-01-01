@@ -48,45 +48,82 @@ class NavButton(QPushButton):
                 border-left: 2px solid white;
             }
         """)
-    
-class SidebarButton(QPushButton):
-    def __init__(self, icon_path: str, tooltip=None):
-        super().__init__()
-# colors: dict,
-        self.setCursor(Qt.PointingHandCursor)
-        self.setCheckable(True)
 
-        icon = QIcon()
-        icon.addPixmap(colorize_icon(icon_path, "#8a8a8a"), QIcon.Normal)
-        icon.addPixmap(colorize_icon(icon_path, "#ffffff"), QIcon.Active)
-        self.setIcon(icon)
-        self.setIconSize(QSize(30, 30))
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class SidebarButtonTheme:
+    bg_normal: str = "#2F3136"
+    bg_hover: str = "#3E4048"
+    bg_active: str = "#57585f"
+
+    icon_normal: str = "#8a8a8a"
+    icon_active: str = "#ffffff"
+
+    button_size: tuple = (44, 44)
+    icon_size: tuple = (30, 30)
+
+class SidebarButton(QPushButton):
+    def __init__(
+        self,
+        icon_path: str,
+        tooltip: str | None = None,
+        checked=False,
+        theme: SidebarButtonTheme = SidebarButtonTheme()
+    ):
+        super().__init__()
+
+        self.theme = theme
+        self.icon_path = icon_path
+
+        self.setCursor(Qt.PointingHandCursor)
+        
+        self.setCheckable(True)
+        self.setChecked(checked)
+
+        self._init_icon()
+        self._init_ui()
 
         if tooltip:
             self.setToolTip(tooltip)
+    
+    def _init_icon(self):
+        self._icon_normal = QIcon(colorize_icon(self.icon_path, self.theme.icon_normal))
+        self._icon_active = QIcon(colorize_icon(self.icon_path, self.theme.icon_active))
 
-        self._init_ui()
+        self._update_icon()
+
+        w, h = self.theme.icon_size
+        self.setIconSize(QSize(w, h))
+    
+    def _update_icon(self):
+        self.setIcon(
+            self._icon_active if self.isChecked() else self._icon_normal
+        )
 
     def _init_ui(self):
-        self.setFixedSize(44, 44)
+        w, h = self.theme.button_size
+        self.setFixedSize(w, h)
         self.setAttribute(Qt.WA_StyledBackground, True)
-        self._update_style()
 
-    def _update_style(self):
+        self.toggled.connect(self._update_icon)
+
         self.setObjectName("SidebarButton")
-        self.setStyleSheet("""
-            #SidebarButton {
-                background-color: #2F3136;
-                color: #f8faff;
+        self._apply_styles()
+
+    def _apply_styles(self):
+        self.setStyleSheet(f"""
+            QPushButton#SidebarButton {{
+                background-color: {self.theme.bg_normal};
                 border: none;
-                border-radius: 22px;
-                font-weight: 600;
                 text-align: center;
-            }
-            #SidebarButton:hover {
-                background-color: #3E4048;
-            }
-            #SidebarButton:pressed {
-                background-color: #57585f;
-            }
+                border-radius: 22px;
+            }}
+            QPushButton#SidebarButton:hover {{
+                background-color: {self.theme.bg_hover};
+            }}
+            QPushButton#SidebarButton:checked {{
+                background-color: {self.theme.bg_active};
+            }}
         """)
+
