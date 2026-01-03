@@ -238,10 +238,10 @@ class ItemFloatingPreview(FloatingPreview):
         buttons_row.setSpacing(6)
 
         self.inspect_btn = PushButton("Inspect")
-        self.remove_btn = PushButton("Remove")
+        # self.remove_btn = PushButton("Remove")
 
         buttons_row.addWidget(self.inspect_btn)
-        buttons_row.addWidget(self.remove_btn)
+        # buttons_row.addWidget(self.remove_btn)
 
         layout.addLayout(buttons_row)
 

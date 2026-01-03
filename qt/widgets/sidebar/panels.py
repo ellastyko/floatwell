@@ -46,7 +46,7 @@ class NotificationsPanel(QWidget):
 
     def toggle_desktop_notifications(self):
         is_enabled = settings_manager.get('notifications.desktop', False)
-        settings_manager.set('notifications.desktop', is_enabled)
+        settings_manager.set('notifications.desktop', not is_enabled)
 
         msg = 'Windows notifications enabled' if is_enabled else 'Windows notifications enabled'
         applog.log_message.emit(msg, 'warning') 

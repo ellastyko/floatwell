@@ -1,0 +1,11 @@
+<b>{{ short_hash_name }}</b>
+
+💰 Price: <b>{{ converted_price }}</b> {{ currency.symbol }}
+📉 Diff: <b>{{ (pricediff * 100) | round(2) }}%</b>
+🎨 Pattern: <b>{{ pattern }}</b>{% if has_rare_pattern and patterninfo %} ({{ patterninfo.rank }}){% endif %}
+💧 Float: <code>{{ "%.6f"|format(float) }}</code>
+
+{% if buy_url %}
+🛒 Buy: <code>{{ buy_url }}</code>
+{% endif %}
+

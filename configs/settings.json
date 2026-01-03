@@ -5,10 +5,20 @@
     "name": "Ukrainian Hryvnia",
     "symbol": "₴"
   },
-  "source": "attachments.json",
+  "source": "rare.json",
   "synchronisations": {
     "request_interval": 12,
     "cycle_interval": 120,
     "error_interval": 1200
+  },
+  "notifications": {
+    "desktop": false,
+    "telegram": true
+  },
+  "telegram": {
+    "BOT_TOKEN": "7585609752:AAGT31u1vkSvU7p4Cfl7QE6L8N-Rq8JRLFY",
+    "CHAT_IDS": [
+      487961110
+    ]
   }
 }

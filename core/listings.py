@@ -86,57 +86,63 @@ class ListingsParser:
                 
             data = response.json()
         except Exception as e:
-            log(f"Error: {e}")
+            log(f"Request error: {e}")
             return None, None
         
-        # data = load_json_resource('./storage/snapshots/endpoint.json')
-        results = []
-        total_count = data.get("total_count", 0)
+        try:
+            # data = load_json_resource('./storage/snapshots/endpoint.json')
+            results = []
+            total_count = data.get("total_count", 0)
 
-        meta = {
-            "total_count": total_count,
-            "start": start,
-            "per_page": per_page,
-            "has_more": (start + per_page) < total_count,
-            "page": (start / per_page) + 1
-        }
+            meta = {
+                "total_count": total_count,
+                "start": start,
+                "per_page": per_page,
+                "has_more": (start + per_page) < total_count,
+                "page": (start / per_page) + 1
+            }
 
-        if total_count == 0:
-            log_message = f"Listings not found for {hash_name} | Please update your current config!"
-            applog.log_message.emit(log_message, 'error')
+            if total_count == 0:
+                log_message = f"Listings not found for {hash_name} | Please update your current config!"
+                applog.log_message.emit(log_message, 'error')
+                return results, meta
+
+            listinginfo = data.get("listinginfo", None)
+            assets = data.get("assets", {}).get("730", {}).get("2", None)
+
+            for listing_id, listing in listinginfo.items():
+                if not self.is_valid_listing(listing):
+                    continue
+
+                asset_id = listing['asset']['id']
+
+                asset = assets[asset_id]
+                props = asset.get("asset_properties", [])
+
+                if not props:
+                    log('No asset properties')
+                    continue
+
+                results.append({
+                    "name":            asset['name'],
+                    "hash_name":       asset['market_hash_name'],
+                    "type":            asset['type'],
+                    "image":           f"{self.BASE_IMAGE_URL}/{asset['icon_url']}",
+                    "listing_id":      listing_id,
+                    "pattern":         self.extract_pattern(props),
+                    "float":           self.extract_float(props),
+                    "price":           (int(listing['price']) + int(listing['fee'])) / 100,
+                    "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
+                    'assets':          self.get_assets(asset['descriptions']),
+                    'buy_url':         f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
+                    'inspect_link':    self.get_inspect_link(listing),
+                    "is_valid":        True,
+                })
+
             return results, meta
-
-        listinginfo = data.get("listinginfo", None)
-        assets = data.get("assets", {}).get("730", {}).get("2", None)
-
-        for listing_id, listing in listinginfo.items():
-            if not self.is_valid_listing(listing):
-                continue
-
-            asset_id = listing['asset']['id']
-
-            asset = assets[asset_id]
-            props = asset.get("asset_properties", [])
-
-            if not props:
-                log('No asset properties')
-                continue
-
-            results.append({
-                "name":            asset['name'],
-                "hash_name":       asset['market_hash_name'],
-                "type":            asset['type'],
-                "image":           f"{self.BASE_IMAGE_URL}/{asset['icon_url']}",
-                "listing_id":      listing_id,
-                "pattern":         self.extract_pattern(props),
-                "float":           self.extract_float(props),
-                "price":           (int(listing['price']) + int(listing['fee'])) / 100,
-                "converted_price": (int(listing['converted_price']) + int(listing['converted_fee'])) / 100,
-                'assets':          self.get_assets(asset['descriptions']),
-                'buy_url':         f"{self.BASE_URL}/{quote(hash_name)}#buylisting|{listing_id}|730|2|{asset_id}",
-                'inspect_link':    self.get_inspect_link(listing),
-                "is_valid":        True,
-            })
-
-        return results, meta
+        except Exception as e:
+            log(f"Parsing error: {e}")
+            return None, None
+        
+        
 

@@ -5,19 +5,20 @@ from dataclasses import dataclass
 from typing import Iterable, Optional, Dict, Any
 from telegram import Bot
 from telegram.error import TelegramError
-
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from utils.logs import log
 
 @dataclass
 class BotEvent:
-    level: str  # info | warn | error | progress
-    text: str
-    meta: Optional[Dict[str, Any]] = None
+    level: str
+    template: str
+    context: Dict[str, Any]
 
 
 class TelegramBotService:
     def __init__(
         self,
-        token: str,
+        token: str,        
         whitelist_chat_ids: Iterable[int],
         flush_interval: float = 0.3,
     ):
@@ -26,15 +27,26 @@ class TelegramBotService:
         :param whitelist_chat_ids: chat_id list allowed to receive messages
         :param flush_interval: seconds between queue flushes
         """
-        self.bot = Bot(token=token)
-        self.whitelist = set(whitelist_chat_ids)
         self.flush_interval = flush_interval
+        self.init_bot(token)
+        self.set_whitelist(whitelist_chat_ids)
+
+        self.jinja = Environment(
+            loader=FileSystemLoader("resources/templates/telegram"),
+            autoescape=select_autoescape(enabled_extensions=("html",))
+        )
 
         self._queue: queue.Queue[BotEvent] = queue.Queue()
         self._running = False
         self._thread: Optional[threading.Thread] = None
 
         self._loop: Optional[asyncio.AbstractEventLoop] = None
+    
+    def init_bot(self, token: str):
+        self.bot = Bot(token=token)
+    
+    def set_whitelist(self, whitelist_chat_ids: Iterable[int]):
+        self.whitelist = set(whitelist_chat_ids)
 
     # ---------------- Public API (safe from PyQt thread) ----------------
 
@@ -50,24 +62,28 @@ class TelegramBotService:
         if self._loop:
             self._loop.call_soon_threadsafe(self._loop.stop)
 
-    def notify(self, text: str, level: str = "info", meta: dict | None = None):
-        """Main entry point from PyQt code"""
-        print('notification')
-        self._queue.put(BotEvent(level=level, text=text, meta=meta))
+    def notify(
+        self,
+        template: str,
+        level: str = "info",
+        context: Dict[str, Any] | None = None
+    ):
+        self._queue.put(
+            BotEvent(
+                level=level,
+                template=template,
+                context=context or {}
+            )
+        )
 
-    def info(self, text: str):
-        self.notify(text, "info")
+    def info(self, template: str, **context):
+        self.notify(template, "info", context)
 
-    def warn(self, text: str):
-        self.notify(text, "warn")
+    def error(self, template: str, **context):
+        self.notify(template, "error", context)
 
-    def error(self, text: str, meta: dict | None = None):
-        self.notify(text, "error", meta)
-
-    def progress(self, text: str, percent: int | None = None):
-        if percent is not None:
-            text = f"{text} ({percent}%)"
-        self.notify(text, "progress")
+    def progress(self, template: str, **context):
+        self.notify(template, "progress", context)
 
     # ---------------- Internal ----------------
 
@@ -93,20 +109,25 @@ class TelegramBotService:
             except queue.Empty:
                 await asyncio.sleep(0)
                 continue
-
-            message = self._format(event)
+            
+            message = self._render(event)
 
             for chat_id in self.whitelist:
                 try:
                     res = await self.bot.send_message(
                         chat_id=chat_id,
-                        text=message
+                        text=message,
+                        parse_mode="HTML",
+                        disable_web_page_preview=True
                     )
-                    print(res)
-
-                except TelegramError:
+                except TelegramError as e:
+                    log(e)
                     # Telegram may be unavailable — ignore by design
                     pass
+
+    def _render(self, event: BotEvent) -> str:
+        tpl = self.jinja.get_template(f"{event.template}.html")
+        return tpl.render(**event.context)
 
     @staticmethod
     def _format(event: BotEvent) -> str:
@@ -125,4 +146,4 @@ class TelegramBotService:
 
 from core.settings import settings_manager
 
-bot = TelegramBotService(token=settings_manager.get('telegram.BOT_TOKEN'))
+bot = TelegramBotService(token=settings_manager.get('telegram.BOT_TOKEN'), whitelist_chat_ids=settings_manager.get('telegram.CHAT_IDS'))
